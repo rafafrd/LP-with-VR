@@ -52,6 +52,19 @@ os dois casos, então projete para o menor.
    *hitch*. Reaproveite objetos fora do loop.
 6. **Texturas grandes** — VRAM estourada causa thrashing. Ver [[Pipeline-de-Assets-3D]].
 
+```mermaid
+flowchart TD
+    B[11,1 ms de budget a 90Hz] --> DC[Draw calls]
+    B --> OD[Overdraw]
+    B --> SH[Sombras dinâmicas]
+    B --> PP[Pós-processamento]
+    B --> AL[Alocação por frame / GC]
+    B --> TX[Texturas grandes / VRAM]
+    DC -->|mitigar| M1[Merge geometria + InstancedMesh]
+    TX -->|mitigar| M2[KTX2]
+    AL -->|mitigar| M3[Reaproveitar objetos]
+```
+
 ## Técnicas com melhor retorno
 
 | Técnica | Ganho típico | Custo de implementação |

@@ -28,6 +28,15 @@ O preço é real: sem cookie, não há atribuição de campanha entre sessões n
 remarketing. Se marketing exigir esses recursos, a conversa vira outra e o banner passa
 a ser obrigatório.
 
+```mermaid
+flowchart TD
+    A{Carrega cookie ou<br/>tag de terceiro?} -- não --> B[Sem banner obrigatório<br/>para o básico]
+    A -- sim --> C[CMP obrigatório:<br/>bloqueio prévio + recusar visível]
+    B --> D{Tem formulário?}
+    C --> D
+    D -- sim --> E[Dado pessoal: base legal,<br/>finalidade, retenção]
+```
+
 ## O que continua sendo dado pessoal
 
 O **formulário**. Nome, e-mail e telefone são dado pessoal sob a LGPD, com ou sem cookie.

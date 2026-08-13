@@ -79,6 +79,15 @@ em performance — meta já registrada em [[ADR-0002-Stack-Base]].
 Sem "staging" separado — para um site estático de uma pessoa, o preview de PR cumpre
 esse papel. Reavaliar se o formulário ganhar backend próprio com estado.
 
+```mermaid
+flowchart LR
+    Dev["Branch feat/*"] -->|PR| Preview[Ambiente de Preview]
+    Preview -->|aprovado + merge| Main[main]
+    Main --> Prod[Produção]
+    Prod -->|falhou| Rollback["Rollback (1 clique)"]
+    Rollback --> Main
+```
+
 ## Monitoramento
 
 | Necessidade | Ferramenta open source | Licença |

@@ -25,6 +25,18 @@ Por que o projeto existe, para quem ele é e o que ele precisa entregar.
 
 Essa frase é a régua: qualquer funcionalidade que não sirva a ela é candidata a corte.
 
+## Como as notas se encadeiam
+
+```mermaid
+flowchart LR
+    E[Escopo] --> R[Requisitos]
+    P[Publico-Alvo] --> R
+    P --> E
+    R --> ARQ[02-Arquitetura]
+    R --> VR[05-VR-e-3D]
+    E --> DES[04-Design-e-UX]
+```
+
 ## Premissas em aberto
 
 - [ ] Qual é o produto/serviço divulgado?

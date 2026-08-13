@@ -77,6 +77,28 @@ npm i -D tailwindcss @tailwindcss/vite
 > `vite-plugin-mkcert` gera certificado local — sem HTTPS, o headset não entra em
 > sessão XR ao acessar pela rede. Detalhes em [[Setup-do-Ambiente]].
 
+### Camadas da stack
+
+```mermaid
+flowchart TD
+    subgraph Build
+        Vite
+    end
+    subgraph UI
+        React --> Tailwind
+    end
+    subgraph Cena3D[3D]
+        Three[Three.js] --> R3F["@react-three/fiber"]
+        R3F --> Drei["@react-three/drei"]
+        R3F --> XR["@react-three/xr"]
+    end
+    Vite --> React
+    Vite --> Three
+    React --> R3F
+    React --> RHF["React Hook Form + Zod"]
+    React --> Umami[Umami analytics]
+```
+
 ### Ponto de atenção no `package.json`
 
 O arquivo atual declara `"type": "commonjs"`. O ferramental moderno (Vite, Vitest,

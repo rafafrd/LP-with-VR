@@ -44,6 +44,17 @@ Tipos: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`.
 - `fix/<slug>` — correção
 - `chore/<slug>` — manutenção
 
+```mermaid
+flowchart LR
+    main --> feat["feat/&lt;slug&gt;"]
+    main --> fix["fix/&lt;slug&gt;"]
+    main --> chore["chore/&lt;slug&gt;"]
+    feat --> PR[Pull Request]
+    fix --> PR
+    chore --> PR
+    PR -->|lint+build+testes+revisao| main
+```
+
 ## Regras específicas de 3D/XR
 
 Estas não são preferência de estilo — são causas conhecidas de bug e de queda de frame:

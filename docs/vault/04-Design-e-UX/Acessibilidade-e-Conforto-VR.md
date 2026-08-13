@@ -37,6 +37,16 @@ Referenciais estáticos no campo de visão (uma cabine, um chão com grade, um h
 fixo) ajudam mesmo quando o restante da cena se move — o mesmo princípio de "olhar o
 horizonte" contra o enjoo em barco.
 
+```mermaid
+flowchart TD
+    L{Locomoção necessária?} -- não --> S[Experiência parada / sentada]
+    L -- sim --> T{Distância curta<br/>e pontual?}
+    T -- sim --> TP[Teleporte]
+    T -- não --> SM[Movimento suave + vignette]
+    TP --> ST[Snap turn para rotação]
+    SM --> ST
+```
+
 ## Configurações de conforto expostas ao usuário
 
 - Alternar teleporte ↔ movimento suave.

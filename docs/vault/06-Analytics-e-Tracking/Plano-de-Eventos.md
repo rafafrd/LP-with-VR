@@ -31,6 +31,18 @@ concluída. Ex.: `form_submitted`, `xr_session_started`.
 | `form_submitted` | Envio com sucesso | `origem` |
 | `form_failed` | Erro de validação ou de rede | `campo`, `motivo` |
 
+```mermaid
+flowchart LR
+    PV[page_viewed] --> CTA[hero_cta_clicked]
+    CTA --> SV[section_viewed]
+    SV --> FS[form_started]
+    FS --> FSub[form_submitted]
+    FS --> FF[form_failed]
+    CTA -.-> XR[xr_session_started]
+    XR --> XE[xr_session_ended]
+    XE --> FSub
+```
+
 ### Experiência 3D / VR
 
 | Evento | Quando dispara | Propriedades |

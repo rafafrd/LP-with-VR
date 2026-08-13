@@ -48,6 +48,17 @@ function nivelDeExperiencia() {
 
 O CTA principal da landing page **nunca** pode depender do nível de experiência.
 
+```mermaid
+flowchart TD
+    A[Visitante abre a LP] --> B{WebGL disponível?}
+    B -- não --> S[Estático]
+    B -- sim --> C{prefers-reduced-motion<br/>ou saveData?}
+    C -- sim --> S
+    C -- não --> D{navigator.xr existe?}
+    D -- não --> T[3D interativo]
+    D -- sim --> X[3D com XR possível]
+```
+
 ## Requisitos de entrega
 
 - **HTTPS obrigatório.** WebXR só roda em contexto seguro (exceto `localhost`).

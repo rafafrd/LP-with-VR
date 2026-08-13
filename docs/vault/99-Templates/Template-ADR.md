@@ -28,6 +28,16 @@ sem o contexto de hoje entenda daqui a um ano.>
 | --- | --- | --- | --- |
 |  |  |  |  |
 
+## Diagrama (opcional)
+
+<Inclua um diagrama se ele ajudar a entender a decisão; apague a seção se não fizer sentido.>
+
+```mermaid
+flowchart LR
+    A[Contexto] --> B[Decisão]
+    B --> C[Consequências]
+```
+
 ## Consequências
 
 **Positivas**

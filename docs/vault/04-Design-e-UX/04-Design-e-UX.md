@@ -25,6 +25,15 @@ usuário** — uma decisão de movimento de câmera mal feita produz náusea rea
 má impressão. As duas coisas (visual e conforto) são decididas pela mesma pessoa neste
 projeto, então ficam na mesma área.
 
+```mermaid
+flowchart TD
+    IV[Identidade-Visual] --> UI[Componentes DOM e 3D]
+    AC[Acessibilidade-e-Conforto-VR] --> UI
+    UI --> FB{Nível de experiência}
+    FB -->|imersivo| VR[Sessão XR confortável]
+    FB -->|3D / estático| DOM[Fallback com a mesma marca]
+```
+
 ## Princípios
 
 1. **Conforto não é opcional nem configurável só para "quem sente enjoo".** É o padrão

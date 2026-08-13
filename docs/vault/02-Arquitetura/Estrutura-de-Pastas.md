@@ -45,6 +45,19 @@ LP-with-VR/
 └── README.md
 ```
 
+## Direção de dependência permitida
+
+```mermaid
+flowchart LR
+    sections[src/sections] -->|estado/props| scene[src/scene]
+    scene -.->|proibido importar| sections
+    components[src/components] --> sections
+    lib[src/lib] --> sections
+    lib --> scene
+    hooks[src/hooks] --> sections
+    hooks --> scene
+```
+
 ## Regras
 
 - **`src/scene/` não importa de `src/sections/`.** O 3D não conhece o layout da página;

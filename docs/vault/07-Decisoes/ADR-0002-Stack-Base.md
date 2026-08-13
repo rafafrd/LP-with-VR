@@ -43,6 +43,17 @@ com Tailwind CSS na camada 2D e Umami para analytics.
 | **PlayCanvas** | Runtime leve; editor visual | Editor **proprietário e hospedado** — fere o critério open source | ❌ |
 | **Three.js puro sem React** | Bundle mínimo; menos dependências | Estado e ciclo de vida na mão | Viável se a LP for muito simples |
 
+```mermaid
+flowchart TD
+    A[Escolher engine 3D] --> B{XR é o produto central,<br/>ou um componente da LP?}
+    B -- componente da LP --> C{Precisa de editor<br/>visual hospedado?}
+    C -- sim --> PC["PlayCanvas (editor proprietário — fere critério)"]
+    C -- não --> D{É só um protótipo<br/>descartável?}
+    D -- sim --> AF[A-Frame]
+    D -- não --> R3F["Three.js + R3F (escolhido)"]
+    B -- produto central --> BJS[Babylon.js]
+```
+
 ## Consequências (se aceito)
 
 **Positivas**

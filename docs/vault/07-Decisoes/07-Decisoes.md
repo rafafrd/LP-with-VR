@@ -27,6 +27,16 @@ na mesa e sob que contexto.
   o antigo ganha `substituido-por: ADR-NNNN` e permanece no repositório.
 - Template em `99-Templates/Template-ADR.md`.
 
+```mermaid
+stateDiagram-v2
+    [*] --> proposto
+    proposto --> aceito
+    aceito --> substituido: novo ADR decide diferente
+    aceito --> descontinuado
+    substituido --> [*]
+    descontinuado --> [*]
+```
+
 ## Quando escrever um
 
 Escreva se a resposta for sim a qualquer uma:

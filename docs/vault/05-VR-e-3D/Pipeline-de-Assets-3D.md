@@ -45,6 +45,20 @@ Dentro do KTX2 há dois codecs:
 | [Blender](https://www.blender.org/) | GPL | Autoria e exportação glTF |
 | [glTF Validator](https://github.khronos.org/glTF-Validator/) | Apache-2.0 | Validação antes de commitar |
 
+```mermaid
+flowchart LR
+    Blender -->|export| GLTF[.gltf de autoria]
+    GLTF --> Dedup[dedup + prune]
+    Dedup --> Resize[resize texturas]
+    Resize --> Geo{Tem animação?}
+    Geo -- sim --> Meshopt
+    Geo -- não --> Draco
+    Meshopt --> KTX2[texturas para KTX2]
+    Draco --> KTX2
+    KTX2 --> Validator[glTF Validator]
+    Validator --> GLB[GLB final em public/models]
+```
+
 ## Receita padrão
 
 ```bash

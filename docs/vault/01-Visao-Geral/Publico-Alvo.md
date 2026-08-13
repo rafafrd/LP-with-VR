@@ -26,6 +26,15 @@ Leitura prática: **a versão sem headset é o produto principal.** VR é o dife
 uma fatia pequena, mas engajada, do público — vale investir na experiência imersiva,
 desde que o fallback (ver [[Suporte-de-Dispositivos]]) não seja tratado como secundário.
 
+```mermaid
+flowchart TD
+    A[Visitantes da LP] --> B{Já experimentou VR?<br/>~48% já teve alguma experiência}
+    B -- não --> C[Fallback 3D/estático<br/>é a experiência inteira]
+    B -- sim --> D{Possui headset?<br/>~13% dos domicílios EUA}
+    D -- não --> C
+    D -- sim --> E[CTA "Entrar em VR"<br/>sessão immersive-vr]
+```
+
 ## Quem acessa (a preencher)
 
 _Depende do canal de aquisição — anúncio, orgânico, indicação? Isso muda o dispositivo

@@ -13,6 +13,15 @@ status: rascunho
 
 ## <seção>
 
+## Diagrama (opcional)
+
+<Apague esta seção se não houver fluxo, relação ou decisão que valha desenhar.>
+
+```mermaid
+flowchart LR
+    A --> B
+```
+
 ## Decisões / regras
 
 - 

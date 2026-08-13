@@ -41,6 +41,28 @@ com fallback em 3D convencional para quem não tem headset.
 | `99-Templates` | Modelos de nota (ADR, RFC, nota comum) |
 | `Assets` | Imagens, diagramas e anexos |
 
+## Mapa visual
+
+```mermaid
+flowchart TD
+    H[Home] --> V1[01 Visão Geral]
+    H --> V2[02 Arquitetura]
+    H --> V3[03 Desenvolvimento]
+    H --> V4[04 Design e UX]
+    H --> V5[05 VR e 3D]
+    H --> V6[06 Analytics e Tracking]
+    H --> V7[07 Decisões]
+    H --> V8[08 Operações]
+    H --> V9[09 Referências]
+    V1 --> V2
+    V2 --> V5
+    V4 --> V5
+    V5 --> V6
+    V2 --> V7
+    V3 --> V7
+    V2 --> V8
+```
+
 ## Comece por aqui
 
 | Se você quer… | Leia |

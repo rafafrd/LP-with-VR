@@ -14,6 +14,18 @@ status: estavel
 sua própria seção **Fontes**; esta página existe para navegar por assunto em vez de por
 nota.
 
+```mermaid
+flowchart TD
+    LU[Links Úteis] --> WX[WebXR / Tracking]
+    LU --> DEV[Stack / Assets / Performance]
+    LU --> AN[Analytics / LGPD]
+    LU --> OP[Deploy / Mercado]
+    WX --> Trk[Como-Funciona-o-Tracking]
+    DEV --> Stk[Stack-Tecnologica]
+    AN --> Ferr[Ferramentas-de-Analytics]
+    OP --> Dep[Deploy-e-Ambientes]
+```
+
 ## WebXR — specs e tracking
 
 - [WebXR Device API — Spatial Tracking Explainer](https://immersive-web.github.io/webxr/spatial-tracking-explainer.html)

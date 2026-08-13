@@ -30,6 +30,15 @@ status: rascunho
 | Títulos | | |
 | Corpo | | |
 
+```mermaid
+flowchart LR
+    Paleta --> DOM[CSS / Tailwind tokens]
+    Paleta --> R3D[Materiais na cena 3D]
+    Tipografia --> DOM
+    Logo --> Favicon
+    Logo --> DOM
+```
+
 ## Logo e assets de marca
 
 - [ ] Logo em SVG (vetor, não bitmap)

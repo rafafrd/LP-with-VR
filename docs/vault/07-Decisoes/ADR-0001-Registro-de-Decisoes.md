@@ -36,6 +36,14 @@ e reversíveis não geram ADR.
 | Wiki externa | Sai de sincronia com o código; não passa por revisão de PR |
 | RFC completo por decisão | Peso demais para projeto de uma pessoa |
 
+```mermaid
+flowchart LR
+    Ctx[Contexto] --> Dec[Decisão]
+    Dec --> Alt[Alternativas consideradas]
+    Dec --> Cons[Consequências]
+    Cons -->|mudou de ideia| Novo["Novo ADR (substituido-por)"]
+```
+
 ## Consequências
 
 **Positivas**

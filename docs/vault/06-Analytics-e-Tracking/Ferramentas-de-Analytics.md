@@ -30,6 +30,16 @@ Pontos que merecem atenção:
 - **Peso do script conta duas vezes aqui**: a LP já vai carregar megabytes de 3D. Cada
   KB de analytics compete com o `time-to-interactive`.
 
+```mermaid
+flowchart TD
+    Q1{Precisa de session replay<br/>ou feature flags?} -- sim --> PH[PostHog]
+    Q1 -- não --> Q2{Marketing exige<br/>relatórios nível GA4?}
+    Q2 -- sim --> MT[Matomo]
+    Q2 -- não --> Q3{Já usa versão hospedada<br/>ou prefere a UI?}
+    Q3 -- sim --> PL[Plausible]
+    Q3 -- não --> UM[Umami self-hosted]
+```
+
 ## Recomendação
 
 **Umami self-hosted.**

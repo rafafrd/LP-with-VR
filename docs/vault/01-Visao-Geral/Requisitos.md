@@ -38,6 +38,17 @@ _O que a LP precisa fazer, do ponto de vista de quem usa. Depende do [[Escopo]] 
 | RNF-09 | Redução de movimento | Respeita `prefers-reduced-motion` | [[Acessibilidade-e-Conforto-VR]] |
 | RNF-10 | Licenciamento | Toda dependência de produção é open source com licença permissiva (MIT/Apache-2.0) | [[Stack-Tecnologica]] |
 
+```mermaid
+flowchart LR
+    RNF01[Frame rate] --> ORC[Orcamento-de-Performance]
+    RNF02[Peso 1a dobra] --> ORC
+    RNF03[Motion-to-photon] --> TRK[Como-Funciona-o-Tracking]
+    RNF05[Contraste] --> ACE[Acessibilidade-e-Conforto-VR]
+    RNF07[Dado pessoal] --> LGPD[LGPD-e-Consentimento]
+    RNF08[Compat. minima] --> SUP[Suporte-de-Dispositivos]
+    RNF10[Licenciamento] --> STK[Stack-Tecnologica]
+```
+
 ## Fora de escopo por enquanto
 
 - Internacionalização (i18n) — depende de [[Publico-Alvo]]

@@ -50,6 +50,16 @@ export default defineConfig({
 Depois disso, o Vite imprime algo como `https://192.168.0.10:5173` — é esse endereço que
 você abre no navegador do headset. Aceite o aviso de certificado autoassinado.
 
+```mermaid
+flowchart LR
+    A[git clone] --> B[npm install]
+    B --> C[npm run dev + mkcert]
+    C --> D{Testar no headset?}
+    D -- sim --> E[HTTPS na rede local<br/>abrir no navegador do Quest]
+    D -- não --> F[localhost no desktop]
+    E --> G[chrome://inspect<br/>DevTools remoto]
+```
+
 ## Debug no Quest
 
 1. Ative o **modo desenvolvedor** na conta Meta e no app do celular.

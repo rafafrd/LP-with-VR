@@ -33,6 +33,15 @@ Como medimos se a landing page funciona — sem transformar o visitante em produ
 4. **Métrica com dono.** Evento que ninguém olha é dívida — revisar a lista a cada
    trimestre e apagar o que não é usado.
 
+```mermaid
+flowchart LR
+    U[Visitante] -->|interage| EV[Eventos]
+    EV --> W["src/lib/analytics.ts (wrapper único)"]
+    W --> UM[Umami self-hosted]
+    UM --> D[Dashboard]
+    D --> Q[Perguntas de negócio]
+```
+
 ## As perguntas que a medição precisa responder
 
 - Quantos visitantes chegam ao CTA principal?

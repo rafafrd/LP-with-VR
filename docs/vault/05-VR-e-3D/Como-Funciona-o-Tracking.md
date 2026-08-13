@@ -85,6 +85,25 @@ session.requestAnimationFrame(function onXRFrame(time, frame) {
 });
 ```
 
+```mermaid
+sequenceDiagram
+    participant Nav as navigator.xr
+    participant Sess as XRSession
+    participant Ref as ReferenceSpace
+    participant App as Loop da aplicação
+
+    App->>Nav: isSessionSupported('immersive-vr')
+    Nav-->>App: true/false
+    App->>Sess: requestSession() (gesto do usuário)
+    Sess->>Ref: requestReferenceSpace('local-floor')
+    loop a cada frame (72-120 Hz)
+        Sess->>App: requestAnimationFrame(time, frame)
+        App->>Sess: frame.getViewerPose(refSpace)
+        Sess-->>App: pose (ou null)
+        App->>App: renderiza os 2 olhos
+    end
+```
+
 Pontos que costumam morder:
 - `getViewerPose()` **pode retornar `null`** (usuário tirou o headset, tracking perdido).
   Nunca assuma pose válida — desenhe o último frame conhecido ou pause.

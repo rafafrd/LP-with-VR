@@ -17,6 +17,16 @@ Build, deploy, ambientes e o que fazer quando o site cai.
 | --- | --- |
 | [[Deploy-e-Ambientes]] | Hospedagem open source, CI/CD, ambientes, monitoramento, runbook |
 
+```mermaid
+flowchart LR
+    PR[Pull Request] --> CI["GitHub Actions (lint+build+testes)"]
+    CI --> Prev[Preview deploy]
+    Prev --> Merge[Merge em main]
+    Merge --> Prod[Deploy de produção]
+    Prod --> Mon[Uptime Kuma / GlitchTip]
+    Mon -->|incidente| RB[Rollback]
+```
+
 ## Princípios
 
 1. **`main` sempre deployável** — regra já registrada em [[03-Desenvolvimento]].
