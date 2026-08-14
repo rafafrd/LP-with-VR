@@ -3,7 +3,7 @@
 | 1   | Scaffold Vite+TS+R3F (ADR-0002) | opencode    | done   | feat/task-1 (merged em dev) |
 | 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
 | 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
-| 4   | Remover Portal 3D + lógica immersive-vr | opencode | todo | - |
+| 4   | Remover Portal 3D + lógica immersive-vr | opencode | done | feat/task-4 (merged em dev) |
 | 5   | Permissão de câmera + fluxo de erro | opencode | todo | - |
 | 6   | Integração MediaPipe Face Landmarker | opencode | todo | - |
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | todo | - |
@@ -240,6 +240,18 @@ Remoção mecânica, delegada ao opencode. Escopo:
   Task 7-9 construírem em cima.
 - Não mexer em cópia/marketing (Hero/Filosofia/Beneficios/ComoFunciona/Cta) — fora do
   escopo desta task (ver observação em `docs/vault/Home.md`).
+
+**Status: done.** `opencode` rodou de primeira, sem intercorrências (esbarrou só na
+mesma restrição de sandbox fora do worktree ao tentar seu próprio smoke test em `/tmp`
+— comportamento esperado, não travou a task, só deixou de rodar `npm run start`
+sozinho). Diff limpo: 12 arquivos, -1088/+14 linhas — só remoção + as duas
+simplificações pedidas (`Scene.tsx`, `useExperienceLevel`). `grep` de confirmação sem
+resultados fora do comentário TODO permitido. Corrigi eu mesmo um `aria-label` residual
+que ainda dizia "Portal 3D interativo do VOID". Validado por mim: `npm run typecheck`,
+`npm run build` (chunk `Scene` caiu de ~1 MB para 898 kB — sumiu o emulador do
+`@react-three/xr`), `npm run start` + teste visual (placeholder renderiza, console
+limpo, nenhum "Entrar em VR" na árvore de acessibilidade). Merge `feat/task-4 → dev`
+sem conflitos.
 
 ### Task 5 — Permissão de câmera + fluxo de erro
 
