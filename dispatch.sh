@@ -26,7 +26,7 @@ case "$AGENT" in
         --add-dir "$WT"
     ;;
   opencode)
-    (cd "$WT" && opencode run --model openrouter/anthropic/claude-sonnet-5 "$CONTEXT")
+    (cd "$WT" && opencode run --model opencode/big-pickle "$CONTEXT")
     ;;
   *)
     echo "agente desconhecido: $AGENT" >&2
