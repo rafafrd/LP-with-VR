@@ -70,7 +70,7 @@ export default function Scene() {
     <div
       className="hero__canvas"
       role="region"
-      aria-label="Portal 3D interativo do VOID"
+      aria-label="Cena 3D (try-on facial em construção)"
     >
       <Canvas
         camera={{ position: [0, 0, 4.0], fov: 48 }}
