@@ -15,7 +15,13 @@ significa menos obrigação de LGPD e menos superfície de ataque.
 
 ## Os três fluxos
 
-### 1. Lead (formulário)
+> **Nota (2026-08-14)**: o fluxo de lead abaixo é do design anterior à
+> [[ADR-0003-Feature-Try-On-Facial]] — a feature de try-on atual não tem formulário nem
+> endpoint de leads no escopo (ver [[Escopo]]). Preservado caso volte a fazer parte do
+> produto; o fluxo ativo hoje é o nº 3 (câmera → detecção facial → ancoragem, 100%
+> local, sem servidor).
+
+### 1. Lead (formulário) — histórico, fora do escopo atual
 
 ```mermaid
 sequenceDiagram
@@ -59,9 +65,10 @@ Estáticos, servidos pelo CDN, com cache longo e hash no nome. Sem dado de usuá
 
 ## Fronteiras
 
-- O canvas 3D **não** envia dado de pose para lugar nenhum. Posição de cabeça e mãos é
-  biométrica-adjacente; se algum dia virar métrica, precisa de consentimento explícito
-  e nota própria neste vault.
+- A câmera e o processamento de landmarks faciais **não** enviam nada para fora do
+  dispositivo — vídeo e pose facial são dado biométrico (LGPD, dado sensível), não só
+  "adjacente" como a pose de VR do design anterior. Ver
+  [[LGPD-e-Consentimento]] §"dados faciais/câmera" e [[ADR-0003-Feature-Try-On-Facial]].
 - Sem cookies de terceiros. Sem pixel de rede social carregado antes de consentimento.
 
 ## Relacionados

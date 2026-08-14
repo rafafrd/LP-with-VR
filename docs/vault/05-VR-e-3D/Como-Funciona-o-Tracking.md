@@ -5,9 +5,17 @@ tags:
   - webxr
   - tracking
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-14
 status: estavel
+substituido-por: ADR-0003
 ---
+
+> ⚠️ **Substituída por [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14).** O produto
+> deixou de ter sessão `immersive-vr` — tudo abaixo (reference spaces, `XRInputSource`,
+> hand tracking, `requestSession`) não se aplica mais à feature atual de try-on facial
+> por câmera. Conteúdo preservado como registro histórico, conforme
+> [[Arquivos-de-Engenharia]]. Para como a ancoragem facial funciona hoje, ver
+> [[Stack-Tecnologica]] e [[ADR-0003-Feature-Try-On-Facial]].
 
 # Como Funciona o Tracking (VR/WebXR)
 

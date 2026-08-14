@@ -4,7 +4,7 @@ tags:
   - moc
   - indice
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-14
 ---
 
 # 🏠 LP with VR — Documentação
@@ -14,15 +14,16 @@ por todas as áreas da documentação.
 
 ## Sobre o projeto
 
-Landing page com experiência imersiva em 3D/VR rodando direto no navegador (WebXR),
-com fallback em 3D convencional para quem não tem headset.
+Feature de try-on facial: liga a câmera, escolhe um modelo de óculos/headset, e vê o
+modelo 3D ancorado no próprio rosto em tempo real — sem loja, sem checkout, sem sessão
+de headset. Ver [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14). O nome do repositório
+é histórico, de quando o produto era uma landing page com sessão `immersive-vr`.
 
 | Campo | Valor |
 | --- | --- |
-| Repositório | `LP-with-VR` |
-| Status | Em concepção — stack ainda não fechada |
-| Estado atual do código | Apenas `package.json` (`type: commonjs`), sem dependências |
-| Stack proposta | Vite + TypeScript + React + Three.js/R3F — ver [[Stack-Tecnologica]] |
+| Repositório | `LP-with-VR` (nome histórico) |
+| Status | Scaffold + Portal 3D + pipeline de assets já construídos (`dev`); removendo a camada XR e construindo a feature de try-on facial |
+| Stack | Vite + TypeScript + React + Three.js/R3F + `@mediapipe/tasks-vision` — ver [[Stack-Tecnologica]] |
 | Responsável | Rafael |
 
 ## Mapa do vault
@@ -68,13 +69,14 @@ flowchart TD
 | Se você quer… | Leia |
 | --- | --- |
 | Entender o que é o produto | [[Escopo]] |
-| Entender como o VR rastreia a cabeça e as mãos | [[Como-Funciona-o-Tracking]] |
+| Entender por que o produto mudou de landing page pra try-on facial | [[ADR-0003-Feature-Try-On-Facial]] |
+| Entender como o rosto é detectado e o modelo ancorado | [[Stack-Tecnologica]] (§0) |
 | Saber qual stack usar e por quê | [[Stack-Tecnologica]] |
 | Rodar o projeto localmente | [[Setup-do-Ambiente]] |
 | Saber quais docs manter no repositório | [[Arquivos-de-Engenharia]] |
 | Preparar modelos 3D para a web | [[Pipeline-de-Assets-3D]] |
-| Não estourar o frame budget | [[Orcamento-de-Performance]] |
-| Medir conversão sem violar a LGPD | [[Plano-de-Eventos]] |
+| Não estourar o orçamento de performance | [[Orcamento-de-Performance]] |
+| Entender os cuidados de privacidade com câmera/dado facial | [[LGPD-e-Consentimento]] |
 
 ## Convenções do vault
 
@@ -88,8 +90,10 @@ flowchart TD
 
 ## Backlog da documentação
 
-- [ ] Fechar a stack e registrar em [[ADR-0002-Stack-Base]]
-- [ ] Escrever o [[Escopo]] com o objetivo real de conversão
-- [ ] Definir os eventos de [[Plano-de-Eventos]]
-- [ ] Preencher [[Setup-do-Ambiente]] depois do scaffold do projeto
-- [ ] Rodar o teste em dispositivo real e preencher [[Suporte-de-Dispositivos]]
+- [x] Fechar a stack base e registrar em [[ADR-0002-Stack-Base]]
+- [x] Escrever o [[Escopo]] (reescrito para a feature de try-on facial em 2026-08-14)
+- [x] Registrar o pivô de produto em [[ADR-0003-Feature-Try-On-Facial]]
+- [ ] Definir os eventos de [[Plano-de-Eventos]] para a feature de try-on
+- [ ] Preencher [[Identidade-Visual]] — ainda em branco
+- [ ] Validar orçamento de performance/jitter de tracking em dispositivo real e atualizar [[Orcamento-de-Performance]]
+- [ ] Revisitar a cópia de marketing (Hero/Filosofia/Benefícios/CTA) já construída — ainda fala do pitch de VR antigo, não da feature de try-on

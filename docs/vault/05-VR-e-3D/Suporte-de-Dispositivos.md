@@ -5,9 +5,18 @@ tags:
   - webxr
   - compatibilidade
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-14
 status: em-revisao
+substituido-por: ADR-0003
 ---
+
+> ⚠️ **Substituída por [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14).** A matriz de
+> compatibilidade abaixo é sobre `immersive-vr`/`immersive-ar` via WebXR — não é mais o
+> caminho crítico do produto. A feature atual (try-on facial) depende de
+> `getUserMedia` + WASM, com uma matriz de compatibilidade bem mais ampla (qualquer
+> navegador moderno com câmera, sem depender de headset). Conteúdo preservado como
+> registro histórico, conforme [[Arquivos-de-Engenharia]]. Compatibilidade atual em
+> [[Stack-Tecnologica]] e [[Requisitos]].
 
 # Suporte de Dispositivos
 

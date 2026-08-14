@@ -17,7 +17,8 @@ na mesa e sob que contexto.
 | # | Decisão | Status | Data |
 | --- | --- | --- | --- |
 | [[ADR-0001-Registro-de-Decisoes]] | Adotar ADRs | Aceito | 2026-08-12 |
-| [[ADR-0002-Stack-Base]] | Stack base do projeto | **Proposto** | 2026-08-12 |
+| [[ADR-0002-Stack-Base]] | Stack base do projeto | Aceito (parcialmente substituído por ADR-0003) | 2026-08-14 |
+| [[ADR-0003-Feature-Try-On-Facial]] | Pivô: try-on facial, fim da sessão immersive-vr | Aceito | 2026-08-14 |
 
 ## Como funciona
 

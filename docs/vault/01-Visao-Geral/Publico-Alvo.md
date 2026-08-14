@@ -10,7 +10,15 @@ status: rascunho
 
 # Público-Alvo
 
-## Contexto de mercado (para calibrar expectativa sobre o VR)
+> **Nota de contexto (2026-08-14, [[ADR-0003-Feature-Try-On-Facial]])**: as estatísticas
+> de posse/uso de headset abaixo justificavam a estratégia de fallback de uma sessão
+> `immersive-vr` opcional — não é mais o recorte relevante, já que a feature atual não
+> oferece sessão de headset. O recorte que importaria agora é posse/uso de
+> câmera+navegador moderno (praticamente universal), não pesquisado ainda — fica como
+> pergunta em aberto abaixo em vez de números inventados. Conteúdo original preservado
+> como histórico.
+
+## Contexto de mercado (histórico — pré-ADR-0003, sobre posse de headset VR)
 
 Números que justificam o princípio de **progressive enhancement** já adotado em
 [[05-VR-e-3D]] — a maioria de quem chega à LP não vai entrar em VR de fato:
@@ -46,10 +54,10 @@ predominante (mobile vs desktop) e, por consequência, a prioridade de fallback.
 
 ## Perguntas em aberto
 
-- [ ] Qual o canal principal de tráfego (ads, orgânico, evento, indicação)?
-- [ ] O público já sabe o que é VR/WebXR ou precisa de explicação antes do CTA?
-- [ ] Mobile é maioria? Se sim, o 3D em tela (sem headset) é o caminho crítico real.
+- [ ] Qual o canal principal de acesso à feature (link direto, embutida em outra página, QR code em loja física)?
+- [ ] Mobile é maioria? Se sim, performance de câmera+MediaPipe+R3F em celular de entrada é o caminho crítico real.
 - [ ] Existe expectativa de tráfego internacional, ou é só Brasil (afeta i18n e LGPD)?
+- [ ] Taxa de posse de dispositivo com câmera + navegador com WASM no público-alvo — provavelmente perto de 100%, mas vale confirmar antes de tratar como certo.
 
 ## Relacionados
 

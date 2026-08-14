@@ -11,8 +11,16 @@ status: estavel
 
 # Orçamento de Performance
 
-Em VR, performance não é otimização tardia: é requisito de conforto. Frame perdido em
-headset causa desconforto físico, não só uma animação feia.
+> **Nota de contexto (2026-08-14, [[ADR-0003-Feature-Try-On-Facial]])**: este documento
+> foi escrito para uma cena renderizada em estéreo a 90 Hz para os dois olhos de um
+> headset. A feature atual renderiza uma única view de tela, ancorada num rosto
+> detectado por câmera — a framing de "90 Hz / dois olhos" abaixo não se aplica mais
+> literalmente. As técnicas gerais (draw calls, zero alocação no loop, KTX2, como medir)
+> continuam corretas e valem para a nova cena; os números-alvo específicos de VR
+> standalone merecem revisão quando a feature estiver rodando de ponta a ponta.
+
+Performance não é otimização tardia: frame perdido ou tracking impreciso é o que separa
+a feature de parecer profissional de parecer quebrada — mesmo fora de um headset.
 
 ## O frame budget
 

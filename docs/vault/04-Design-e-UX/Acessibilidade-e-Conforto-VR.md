@@ -11,6 +11,15 @@ status: estavel
 
 # Acessibilidade e Conforto em VR
 
+> **Nota de contexto (2026-08-14, [[ADR-0003-Feature-Try-On-Facial]])**: sem sessão
+> `immersive-vr` no escopo atual, locomoção/teleporte/snap-turn e cybersickness não se
+> aplicam mais à feature (não há headset, ninguém se movimenta no espaço). O que
+> continua valendo: contraste AA na UI, seleção sem depender só de hover contínuo, e
+> `prefers-reduced-motion` para qualquer animação de UI — ver [[Requisitos]] (RNF-05,
+> RNF-09). Conteúdo abaixo preservado como histórico; não foi marcado com
+> `substituido-por` porque fica fora de `docs/vault/05-VR-e-3D/` e não foi revisado
+> nota a nota.
+
 > Ligado por [[Como-Funciona-o-Tracking]]: lá está o *como* técnico do tracking; aqui
 > está o *como tratar o corpo e os limites* de quem usa a experiência.
 
