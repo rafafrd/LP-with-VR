@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { track } from "../lib/analytics";
 
 export type PerfProfile = "low" | "medium" | "high";
-export type ExperienceLevel = "estatico" | "3d" | "3d-com-xr-possivel";
+export type ExperienceLevel = "estatico" | "3d";
 
 type NavigatorWithMemory = Navigator & {
   deviceMemory?: number;
@@ -63,7 +63,7 @@ export function usePrefersReducedMotion(): boolean {
  * Decisão de nível de experiência (Suporte-de-Dispositivos.md §Estratégia de fallback):
  * 1. Sem WebGL -> 'estatico'
  * 2. prefers-reduced-motion ou connection.saveData -> 'estatico'
- * 3. WebGL ativo e sem restrições -> '3d-com-xr-possivel' se navigator.xr existe, ou '3d'
+ * 3. WebGL ativo e sem restrições -> '3d'
  */
 export function useExperienceLevel(): ExperienceLevel {
   const reducedMotion = usePrefersReducedMotion();
@@ -85,10 +85,6 @@ export function useExperienceLevel(): ExperienceLevel {
     if (nav.connection?.saveData) {
       track({ action: "experience_degraded", label: "save_data" });
       return "estatico";
-    }
-
-    if ("xr" in navigator && Boolean((navigator as any).xr)) {
-      return "3d-com-xr-possivel";
     }
 
     return "3d";

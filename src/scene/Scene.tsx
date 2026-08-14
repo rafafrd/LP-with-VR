@@ -1,24 +1,17 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { XR, useXR } from "@react-three/xr";
 import {
   useExperienceLevel,
   usePerfProfile,
   usePrefersReducedMotion,
 } from "../hooks/usePerfProfile";
 import StaticFallback from "./StaticFallback";
-import VoidPortal from "./objects/VoidPortal";
-import EnterVRButton from "./xr/EnterVRButton";
-import XRExperience from "./xr/XRExperience";
-import { xrStore } from "./xr/xrStore";
 
 type SceneContentProps = {
   reducedMotion: boolean;
 };
 
 function SceneContent({ reducedMotion }: SceneContentProps) {
-  const isPresenting = useXR((state) => state.session != null);
-
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -29,10 +22,9 @@ function SceneContent({ reducedMotion }: SceneContentProps) {
           - Limites minDistance/maxDistance para o usuário não perder o objeto
           - Pan desabilitado para manter o foco centralizado
           - Damping para suavidade
-          - AutoRotate suspenso quando reducedMotion ou quando em XR
+          - AutoRotate suspenso quando reducedMotion
       */}
       <OrbitControls
-        enabled={!isPresenting}
         enablePan={false}
         enableZoom={true}
         minDistance={2.4}
@@ -41,12 +33,17 @@ function SceneContent({ reducedMotion }: SceneContentProps) {
         maxPolarAngle={Math.PI - Math.PI / 6}
         enableDamping={true}
         dampingFactor={0.05}
-        autoRotate={!reducedMotion && !isPresenting}
+        autoRotate={!reducedMotion}
         autoRotateSpeed={0.6}
       />
 
-      <XRExperience />
-      <VoidPortal reducedMotion={reducedMotion} />
+      {/* TODO(try-on): conteúdo real da Task 8 — ancoragem do GLB nos landmarks faciais.
+          Placeholder mínimo (anteriormente o VoidPortal): só precisa manter o Canvas
+          montando e renderizando sem erro, não é o visual final. */}
+      <mesh position={[0, 0, 0]}>
+        <torusGeometry args={[1, 0.02, 12, 64]} />
+        <meshBasicMaterial color="#cfff04" />
+      </mesh>
     </>
   );
 }
@@ -73,7 +70,7 @@ export default function Scene() {
     <div
       className="hero__canvas"
       role="region"
-      aria-label="Portal 3D interativo do VOID"
+      aria-label="Cena 3D (try-on facial em construção)"
     >
       <Canvas
         camera={{ position: [0, 0, 4.0], fov: 48 }}
@@ -84,13 +81,8 @@ export default function Scene() {
           powerPreference: "high-performance",
         }}
       >
-        <XR store={xrStore}>
-          <SceneContent reducedMotion={reducedMotion} />
-        </XR>
+        <SceneContent reducedMotion={reducedMotion} />
       </Canvas>
-
-      {/* Botão de entrada em VR (overlay DOM acessível com contraste AA) */}
-      <EnterVRButton />
     </div>
   );
 }
