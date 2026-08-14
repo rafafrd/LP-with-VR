@@ -24,6 +24,13 @@ TASKS.md na raiz. Fluxo por task:
 6. Atualize TASKS.md: status `done`, branch preenchida
 7. Se não ok: ajuste o prompt e rode de novo (não empurre pro mesmo commit)
 
+## Branch de integração
+
+Tasks não nascem mais de `main` — nascem de `dev` (crie se não existir:
+`git branch dev main`). Cada task valida e faz merge em `dev`, nunca em
+`main` diretamente. `main` só recebe merge de `dev` quando eu confirmar
+manualmente que o build final está ok.
+
 ## Agentes disponíveis
 
 - **antigravity** (`agy`) — componentes visuais, browser-in-the-loop, tudo que

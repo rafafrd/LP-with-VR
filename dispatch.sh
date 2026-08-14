@@ -11,7 +11,7 @@ WT="../void-task-${TASK_ID}"
 if [ -d "$WT" ]; then
   echo "worktree $WT já existe — retomando"
 else
-  git worktree add "$WT" -b "$BRANCH"
+  git worktree add "$WT" -b "$BRANCH" dev
 fi
 
 CONTEXT="Contexto obrigatório: leia docs/vault/ antes de editar.
@@ -38,7 +38,7 @@ cd "$WT"
 if [ -n "$(git status --porcelain)" ]; then
   git add -A
   git commit -m "task ${TASK_ID}: ${PROMPT:0:60}"
-  echo "commit criado em $BRANCH — revise com: git -C $WT diff main"
+  echo "commit criado em $BRANCH — revise com: git -C $WT diff dev"
 else
   echo "nenhuma mudança gerada — revise a saída do agente acima"
 fi
