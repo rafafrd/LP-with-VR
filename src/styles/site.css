@@ -365,7 +365,16 @@ a {
     radial-gradient(900px circle at 15% 85%, rgba(255, 46, 106, 0.08), transparent 60%);
 }
 
+.hero__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .hero__inner {
+  position: relative;
+  z-index: 1;
   max-width: 900px;
 }
 
