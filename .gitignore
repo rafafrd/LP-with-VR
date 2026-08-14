@@ -1,1 +1,6 @@
 docs/Skills-agents
+
+node_modules/
+dist/
+../void-task-*/
+repomix-output.md
