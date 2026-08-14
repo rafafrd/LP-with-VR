@@ -4,6 +4,76 @@
 | 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
 | 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
 
+## Checklist final (build integrado em `dev`, commit `26eb8cc`)
+
+Rodado contra `dev` depois dos 3 merges (não contra worktree isolado) — `npm install`
+limpo, `npm run typecheck`, `npm run build` e `npm run start` na raiz do repo.
+
+### docs/vault/05-VR-e-3D/Orcamento-de-Performance.md — "Portões de qualidade"
+
+- [x] **Peso da 1ª dobra ≤ 5 MB** — medido via `vite preview` + Network tab (Task 2):
+  `index` (~50 kB) + `preload-helper` + CSS ≈ 260 kB no paint inicial; o chunk `Scene`
+  (~1 MB / 282 kB gzip) chega logo depois, code-split. Total bem abaixo do teto de
+  5 MB. Os chunks `emulate`/`living_room`/`music_room`/`office_*` (~6 MB, emulador do
+  `@react-three/xr`) existem em `dist/` mas **não são baixados** em uso normal
+  (confirmado via Network tab) — candidato a limpeza futura, não bloqueante.
+- [x] **Nenhuma alocação nova no render loop** — verificado por leitura de código:
+  `VoidPortal.tsx` reaproveita `_tempScale` e os `Float32Array` de partículas fora do
+  `useFrame`; nenhum `new THREE.Vector3()`/`Quaternion` dentro do loop.
+- [~] **`renderer.info.render.calls` ≤ 150** — não medido em runtime (sem devtools de
+  profiling instalado nesta sessão); contagem manual pela árvore de `VoidPortal`
+  (3 anéis × 2 meshes + 8 marcadores + core + aura + shockwave + partículas + hitbox)
+  fica em torno de ~19 draw calls, bem dentro do alvo de ~100. Recomendo confirmar com
+  `renderer.info` real antes do lançamento.
+- [ ] **Throttle de CPU 4× no DevTools** — não testável com as ferramentas desta sessão
+  (a extensão Claude-in-Chrome não expõe throttling de CPU). Pendente de teste manual.
+- [ ] **≥ 72 fps por 60 s contínuos em dispositivo alvo** — exige hardware VR (Quest);
+  fora do alcance desta sessão, como já sinalizado como "não testado" na própria nota
+  do vault.
+
+### docs/vault/05-VR-e-3D/Suporte-de-Dispositivos.md — "Plano de testes" + "Requisitos de entrega"
+
+- [x] **Fallback 3D — Chrome desktop** — testado extensivamente (Tasks 1, 2 e nesta
+  checklist): renderiza, orbit/zoom funcionam, console limpo.
+- [x] **Fallback estático / nível de experiência** — `useExperienceLevel` cobre
+  sem-WebGL, `prefers-reduced-motion` e `saveData` (verificado por leitura de código,
+  Task 2); não simulado via DevTools nesta sessão (sem acesso a emulação de mídia via
+  Claude-in-Chrome).
+- [x] **Botão "Entrar em VR" nunca aparece sem `isSessionSupported`** — confirmado ao
+  vivo neste Chrome desktop (sem WebXR): o link não existe na árvore de acessibilidade
+  da página.
+- [x] **Sessão XR só inicia por gesto do usuário** — confirmado por leitura de código:
+  `EnterVRButton` só chama `xrStore.enterVR()` dentro do `onClick`.
+- [ ] **Fluxo completo em VR (Quest 3)** — sem hardware; não testado (mesmo status da
+  nota do vault).
+- [ ] **Fallback 3D — Safari iOS** / **Gaze-and-pinch — Vision Pro** — sem hardware;
+  não testado.
+- **HTTPS obrigatório** — não se aplica ainda (só rodou em `localhost`, isento pela
+  spec do WebXR); vale revisitar no runbook de deploy quando houver domínio real.
+
+### RF/RNF verificados diretamente nesta sessão
+
+- [x] RF-01 — CTA acima da dobra, independente do Canvas (`Suspense`+`lazy`, testado
+  com o servidor real).
+- [x] RF-02 — órbita/scroll funcionam no Portal (drag testado ao vivo).
+- [x] RF-03 — WebXR real via `@react-three/xr`, botão condicional confirmado.
+- [~] RF-04 (formulário de lead) — validação client existe (`zod` em
+  `src/lib/validation.ts`, usada em `Cta.tsx`); **não há validação server** — não há
+  backend nesta fase do projeto, fora do escopo das 3 tasks executadas.
+- [x] RNF-08 — fallback funciona sem WebXR (é o caminho testado o tempo todo nesta
+  sessão, já que este ambiente não tem WebXR).
+
+### Itens não cobertos por nenhuma das 3 tasks (fora de escopo, não pendência de bug)
+
+- RNF-05 (contraste AA dentro do canvas) — botão de VR é overlay DOM com contraste
+  verificado por design (Task 2), mas não medido com ferramenta de contraste.
+- RNF-07 / LGPD — nenhum coletor de analytics real foi ligado (`analytics.ts` é stub);
+  revisar antes de apontar para um provedor de verdade (Umami, per ADR-0002).
+- Pipeline-de-Assets-3D: o **binário `ktx` (KTX-Software) não está instalado** nesta
+  máquina — o pipeline funciona e foi validado no caminho "KTX2 pulado com aviso".
+  Instalar KTX-Software antes de otimizar o primeiro asset de verdade para ganhar o
+  benefício de VRAM do KTX2.
+
 ## Detalhes
 
 ### Task 1 — Scaffold Vite+TS+R3F (ADR-0002)
