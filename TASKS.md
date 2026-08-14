@@ -3,8 +3,18 @@
 | 1   | Scaffold Vite+TS+R3F (ADR-0002) | opencode    | done   | feat/task-1 (merged em dev) |
 | 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
 | 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
+| 4   | Remover Portal 3D + lógica immersive-vr | opencode | todo | - |
+| 5   | Permissão de câmera + fluxo de erro | opencode | todo | - |
+| 6   | Integração MediaPipe Face Landmarker | opencode | todo | - |
+| 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | todo | - |
+| 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
+| 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
 
-## Checklist final (build integrado em `dev`, commit `26eb8cc`)
+> Tasks 4-9: pivô de escopo registrado em
+> [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
+> (2026-08-14) — ver detalhes de cada uma abaixo, seção "Pivô — Try-on facial".
+
+## Checklist final (build integrado em `dev`, commit `26eb8cc`, pré-pivô)
 
 Rodado contra `dev` depois dos 3 merges (não contra worktree isolado) — `npm install`
 limpo, `npm run typecheck`, `npm run build` e `npm run start` na raiz do repo.
@@ -202,3 +212,67 @@ com texturas (draco: 178.8 kB → 78.9 kB, resize 2048×1536 → 1024×768, 3
 texturas e slots preservados) e animado (meshopt) passaram no validador; paths
 de erro testados (sem args/arquivo inexistente → exit 2, GLB corrompido → exit
 1, `--help` → exit 0). Scratch de teste em `tmp/` removido antes do commit.
+
+## Pivô — Try-on facial (2026-08-14)
+
+Escopo do produto mudou: de landing page com sessão `immersive-vr` para feature isolada
+de try-on facial (câmera → detecção de rosto → modelo 3D ancorado no rosto). Registrado
+em [[ADR-0003-Feature-Try-On-Facial]]; Escopo/Requisitos/Stack-Tecnologica reescritos no
+mesmo commit da documentação (Passo 1, feito diretamente, não delegado).
+
+### Task 4 — Remover Portal 3D + lógica immersive-vr
+
+Remoção mecânica, delegada ao opencode. Escopo:
+
+- Remover: `src/scene/xr/` inteiro (`EnterVRButton.tsx`, `XRExperience.tsx`,
+  `xrStore.ts`), `src/hooks/useXRSupport.ts`, `src/scene/objects/VoidPortal.tsx`,
+  `src/scene/materials/portalMaterials.ts`, dependência `@react-three/xr` do
+  `package.json`, estilos `.xr-btn*`/`.xr-button-wrapper` de `site.css`.
+- Simplificar `Scene.tsx`: tirar o wrapper `<XR store={xrStore}>`, os checks de
+  `isPresenting` no `OrbitControls`, a renderização de `<VoidPortal>` — deixar um
+  placeholder mínimo comentado no lugar (a Task 8 entra com o conteúdo real).
+- Simplificar `useExperienceLevel` (`usePerfProfile.ts`): remover o tier
+  `3d-com-xr-possivel` atrelado a `navigator.xr` — não existe mais distinção de XR
+  possível, só `estatico`/`3d`.
+- **Manter**: `Scene.tsx` como componente lazy-loaded via `React.lazy`+`Suspense` em
+  `Hero.tsx` (code-splitting), `StaticFallback.tsx` e o padrão de fallback por
+  `prefers-reduced-motion`/`usePerfProfile`/sem-WebGL — são a base reaproveitável pra
+  Task 7-9 construírem em cima.
+- Não mexer em cópia/marketing (Hero/Filosofia/Beneficios/ComoFunciona/Cta) — fora do
+  escopo desta task (ver observação em `docs/vault/Home.md`).
+
+### Task 5 — Permissão de câmera + fluxo de erro
+
+`getUserMedia`, tratamento de `NotAllowedError`/`NotFoundError`/contexto inseguro, com
+mensagem clara e acionável em cada caso — ver RF-01/RNF-08 em [[Requisitos]] e a tabela
+"Problemas comuns" de [[Setup-do-Ambiente]]. Delegado ao opencode (bem especificado,
+sem ambiguidade visual).
+
+### Task 6 — Integração MediaPipe Face Landmarker
+
+`@mediapipe/tasks-vision`, loop de detecção rodando sobre o `MediaStream` da Task 5.
+Carregar o runtime/modelo do MediaPipe fora do caminho crítico (mesmo princípio de
+lazy-load já usado pro Canvas — RNF-03 em [[Requisitos]]). Delegado ao opencode.
+
+### Task 7 — Seletor de modelos de óculos/headset
+
+2-3 modelos placeholder em GLB (geometria primitiva aceitável se não houver asset
+final — não bloquear a feature por falta de modelo bonito, ver [[Escopo]]). Julgamento
+visual — antigravity.
+
+### Task 8 — Ancoragem do GLB nos landmarks faciais
+
+O coração da feature. Usar `facialTransformationMatrixes` do Face Landmarker (não
+derivar posição/rotação de landmarks individuais ponto a ponto) + suavização entre
+frames — ver a recomendação técnica detalhada em [[Stack-Tecnologica]] §0. Mais sensível
+a ficar "errado" (jitter) — antigravity, priorizado.
+
+### Task 9 — Overlay vídeo + canvas 3D compostos
+
+Vídeo da câmera como fundo, espelhado (como selfie), óculos por cima, alinhados ao
+mesmo espaço de coordenadas do vídeo. Antigravity.
+
+### Regra de teste visual para as tasks 5-9
+
+Além do teste visual padrão via extensão Chrome, testar com câmera real (não só
+"renderizou sem erro") e conferir jitter/lag no tracking antes de marcar `done`.
