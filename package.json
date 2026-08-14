@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "assets:optimize": "node scripts/optimize-glb.mjs",
+    "assets:sync-runtime-3d": "node scripts/sync-runtime-3d.mjs"
   },
   "keywords": [],
   "author": "",
@@ -24,11 +26,20 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.4.2",
+    "@gltf-transform/extensions": "^4.4.2",
+    "@gltf-transform/functions": "^4.4.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.5.4",
+    "draco3dgltf": "^1.5.7",
+    "gltf-validator": "^2.0.0-dev.3.10",
+    "meshoptimizer": "^1.2.0",
+    "ndarray": "^1.0.19",
+    "ndarray-lanczos": "^0.3.0",
+    "ndarray-pixels": "^5.2.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19",
     "typescript": "^7.0.2",
