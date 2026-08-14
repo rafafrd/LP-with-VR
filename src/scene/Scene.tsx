@@ -1,5 +1,6 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import CameraPermissionGate from "../components/CameraPermissionGate";
 import {
   useExperienceLevel,
   usePerfProfile,
@@ -67,22 +68,29 @@ export default function Scene() {
     profile === "high" ? [1, 2] : profile === "medium" ? [1, 1.5] : [1, 1];
 
   return (
-    <div
-      className="hero__canvas"
-      role="region"
-      aria-label="Cena 3D (try-on facial em construção)"
-    >
-      <Canvas
-        camera={{ position: [0, 0, 4.0], fov: 48 }}
-        dpr={dpr}
-        gl={{
-          alpha: true,
-          antialias: true,
-          powerPreference: "high-performance",
-        }}
+    <>
+      <div
+        className="hero__canvas"
+        role="region"
+        aria-label="Cena 3D (try-on facial em construção)"
       >
-        <SceneContent reducedMotion={reducedMotion} />
-      </Canvas>
-    </div>
+        <Canvas
+          camera={{ position: [0, 0, 4.0], fov: 48 }}
+          dpr={dpr}
+          gl={{
+            alpha: true,
+            antialias: true,
+            powerPreference: "high-performance",
+          }}
+        >
+          <SceneContent reducedMotion={reducedMotion} />
+        </Canvas>
+      </div>
+
+      {/* Integração temporária (Task 5): o gate de permissão de câmera é DOM,
+          fora do Canvas, só pra validar o fluxo getUserMedia com câmera real.
+          Layout final (vídeo como fundo + canvas 3D por cima) é a Task 9. */}
+      <CameraPermissionGate />
+    </>
   );
 }
