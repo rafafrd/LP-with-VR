@@ -2,7 +2,7 @@
 | --- | ------------------------------- | ----------- | ------ | ------------ |
 | 1   | Scaffold Vite+TS+R3F (ADR-0002) | opencode    | done   | feat/task-1 (merged em dev) |
 | 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
-| 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 |
+| 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
 
 ## Detalhes
 
