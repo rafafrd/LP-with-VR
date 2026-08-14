@@ -1,7 +1,7 @@
 | #   | Task                            | Agente      | Status | Branch       |
 | --- | ------------------------------- | ----------- | ------ | ------------ |
 | 1   | Scaffold Vite+TS+R3F (ADR-0002) | opencode    | done   | feat/task-1 (merged em dev) |
-| 2   | Componente Hero + Portal 3D     | antigravity | todo   | -            |
+| 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
 | 3   | Script pipeline glTF-Transform  | opencode    | todo   | -            |
 
 ## Detalhes
@@ -55,3 +55,34 @@ erros, CTA acima da dobra sem depender do canvas (RF-01), sem overflow
 horizontal em mobile, form de acesso funcional. Nav sem hambúrguer em mobile
 é comportamento herdado do design original (confirmado no CSS antigo em
 `dev`), não regressão da migração. Merge `feat/task-1 → dev` sem conflitos.
+
+### Task 2 — Componente Hero + Portal 3D
+
+**Status: done.** `antigravity` rodou de primeira contra `dev` atualizado (sem
+os problemas de infraestrutura da task 1 — `dispatch.sh` já estava correto).
+Prompt cobriu docs/vault/05-VR-e-3D/ (Como-Funciona-o-Tracking,
+Orcamento-de-Performance, Suporte-de-Dispositivos) e
+docs/vault/04-Design-e-UX/Acessibilidade-e-Conforto-VR.md.
+
+Entregue: `VoidPortal` (anéis contra-rotativos + singularidade + 160
+partículas + shockwave ao ativar, via `src/scene/objects/`), `OrbitControls`
+calibrado (RF-02, sem pan, limites de distância/ângulo, autoRotate suspenso
+em `prefers-reduced-motion` e em sessão XR), WebXR real via `@react-three/xr`
+(`xrStore`, `XROrigin`, botão "Entrar em VR" que nunca aparece sem
+`isSessionSupported('immersive-vr')` — RF-03), estratégia de fallback em 3
+níveis (`useExperienceLevel`: estático / 3D / 3D+XR, cobrindo sem-WebGL,
+`prefers-reduced-motion` e `saveData`), code-splitting do Canvas via
+`React.lazy`+`Suspense` com `StaticFallback` como placeholder. 7 materiais
+únicos, ~19 draw calls, zero alocação no `useFrame` — dentro do orçamento de
+Orcamento-de-Performance.md.
+
+Revisão manual + validação própria: `npm run build` ok; `vite preview` +
+Network tab confirmam que só `index` (~50 kB), `preload-helper`, CSS e
+`Scene` (~1 MB, code-split, carrega depois do primeiro paint) são baixados no
+load normal — os chunks `emulate`/`living_room`/`music_room`/`office_*`
+(~6 MB somados) são o emulador de dispositivo do próprio `@react-three/xr` e
+**não são buscados** em uso normal (achado registrado, não bloqueante; vale
+investigar depois se dá pra excluir do bundle). Console limpo (só o aviso
+inofensivo de depreciação do `THREE.Clock`). Drag/orbit testado e funcional;
+botão de VR corretamente ausente no Chrome desktop sem WebXR. Merge
+`feat/task-2 → dev` sem conflitos.
