@@ -1,88 +1,96 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
-import type { Mesh } from "three";
-import { usePerfProfile, type PerfProfile } from "../hooks/usePerfProfile";
+import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { XR, useXR } from "@react-three/xr";
+import {
+  useExperienceLevel,
+  usePerfProfile,
+  usePrefersReducedMotion,
+} from "../hooks/usePerfProfile";
+import StaticFallback from "./StaticFallback";
+import VoidPortal from "./objects/VoidPortal";
+import EnterVRButton from "./xr/EnterVRButton";
+import XRExperience from "./xr/XRExperience";
+import { xrStore } from "./xr/xrStore";
 
-const SEGMENTS: Record<PerfProfile, { radial: number; tubular: number }> = {
-  high: { radial: 16, tubular: 96 },
-  medium: { radial: 12, tubular: 72 },
-  low: { radial: 8, tubular: 48 },
+type SceneContentProps = {
+  reducedMotion: boolean;
 };
 
-type RingProps = {
-  radius: number;
-  color: string;
-  speed?: number;
-  tilt?: number;
-  opacity?: number;
-  reverse?: boolean;
-  segments?: { radial: number; tubular: number };
-};
-
-function Ring({ radius, color, speed = 1, tilt = 0, opacity = 0.5, reverse = false, segments }: RingProps) {
-  const ref = useRef<Mesh>(null);
-
-  useFrame((_, delta) => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const dir = reverse ? -1 : 1;
-    mesh.rotation.x += dir * delta * speed;
-    mesh.rotation.y += dir * delta * speed * 0.6;
-  });
+function SceneContent({ reducedMotion }: SceneContentProps) {
+  const isPresenting = useXR((state) => state.session != null);
 
   return (
-    <mesh ref={ref} rotation={[Math.PI / 2.4 + tilt, 0, 0]}>
-      <torusGeometry args={[radius, 0.022, segments?.radial ?? 12, segments?.tubular ?? 72]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.7} transparent opacity={opacity} />
-    </mesh>
-  );
-}
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[0, 2, 4]} intensity={2.5} color="#ffffff" />
+      <pointLight position={[0, 0, 2.5]} intensity={12} color="#cfff04" />
 
-function Core() {
-  const ref = useRef<Mesh>(null);
+      {/* OrbitControls calibrado (RF-02):
+          - Limites minDistance/maxDistance para o usuário não perder o objeto
+          - Pan desabilitado para manter o foco centralizado
+          - Damping para suavidade
+          - AutoRotate suspenso quando reducedMotion ou quando em XR
+      */}
+      <OrbitControls
+        enabled={!isPresenting}
+        enablePan={false}
+        enableZoom={true}
+        minDistance={2.4}
+        maxDistance={7.5}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI - Math.PI / 6}
+        enableDamping={true}
+        dampingFactor={0.05}
+        autoRotate={!reducedMotion && !isPresenting}
+        autoRotateSpeed={0.6}
+      />
 
-  useFrame(() => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const scale = 1 + Math.sin(performance.now() / 700) * 0.06;
-    mesh.scale.setScalar(scale);
-  });
-
-  return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[0.2, 32, 32]} />
-      <meshStandardMaterial color="#cfff04" emissive="#cfff04" emissiveIntensity={1.6} />
-    </mesh>
-  );
-}
-
-function PortalPlaceholder({ segments }: { segments: RingProps["segments"] }) {
-  return (
-    <group position={[0, 0, 0]}>
-      <Ring radius={0.95} color="#cfff04" speed={0.35} segments={segments} />
-      <Ring radius={0.72} color="#8b5cf6" speed={0.55} reverse segments={segments} />
-      <Ring radius={0.49} color="#ff2e6a" speed={0.8} segments={segments} />
-      <Core />
-    </group>
+      <XRExperience />
+      <VoidPortal reducedMotion={reducedMotion} />
+    </>
   );
 }
 
 export default function Scene() {
+  const experienceLevel = useExperienceLevel();
+  const reducedMotion = usePrefersReducedMotion();
   const profile = usePerfProfile();
+
+  // 1. Fallback Estático de Nível 1 & 2 (sem WebGL, reduced-motion, saveData)
+  if (experienceLevel === "estatico") {
+    return (
+      <div className="hero__canvas hero__canvas--static" aria-hidden="true">
+        <StaticFallback />
+      </div>
+    );
+  }
+
+  // 2. Resolução adaptativa baseada no perfil de hardware
   const dpr: [number, number] =
     profile === "high" ? [1, 2] : profile === "medium" ? [1, 1.5] : [1, 1];
 
   return (
-    <div className="hero__canvas" aria-hidden="true">
+    <div
+      className="hero__canvas"
+      role="region"
+      aria-label="Portal 3D interativo do VOID"
+    >
       <Canvas
-        camera={{ position: [0, 0, 4.2], fov: 50 }}
+        camera={{ position: [0, 0, 4.0], fov: 48 }}
         dpr={dpr}
-        gl={{ alpha: true, antialias: true }}
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance",
+        }}
       >
-        <ambientLight intensity={0.5} />
-        <pointLight position={[0, 0, 3]} intensity={40} color="#cfff04" />
-        <PortalPlaceholder segments={SEGMENTS[profile]} />
+        <XR store={xrStore}>
+          <SceneContent reducedMotion={reducedMotion} />
+        </XR>
       </Canvas>
+
+      {/* Botão de entrada em VR (overlay DOM acessível com contraste AA) */}
+      <EnterVRButton />
     </div>
   );
 }
