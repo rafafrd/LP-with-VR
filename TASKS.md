@@ -2,7 +2,7 @@
 | --- | ------------------------------- | ----------- | ------ | ------------ |
 | 1   | Scaffold Vite+TS+R3F (ADR-0002) | opencode    | done   | feat/task-1 (merged em dev) |
 | 2   | Componente Hero + Portal 3D     | antigravity | done   | feat/task-2 (merged em dev) |
-| 3   | Script pipeline glTF-Transform  | opencode    | todo   | -            |
+| 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 |
 
 ## Detalhes
 
@@ -86,3 +86,49 @@ investigar depois se dá pra excluir do bundle). Console limpo (só o aviso
 inofensivo de depreciação do `THREE.Clock`). Drag/orbit testado e funcional;
 botão de VR corretamente ausente no Chrome desktop sem WebXR. Merge
 `feat/task-2 → dev` sem conflitos.
+
+### Task 3 — Script pipeline glTF-Transform
+
+**Status: done.** `opencode` (agente corrente, este repositório) rodou direto
+no worktree `../void-task-3` (branch `feat/task-3`) contra a receita de
+docs/vault/05-VR-e-3D/Pipeline-de-Assets-3D.md +
+Orcamento-de-Performance.md.
+
+Entregue: `scripts/optimize-glb.mjs` (pipeline de 6 etapas: `dedup` → `prune`
+→ `resize` max 1024×1024 → compressão de geometria `draco` (edgebreaker) ou
+`meshopt` (medium) conforme animação/morph targets → KTX2 opcional via binário
+externo `ktx` → validação final com `gltf-validator`, falhando com exit 1 em
+saída inválida), `scripts/sync-runtime-3d.mjs` (copia transcoders do three →
+`public/`), `src/lib/gltfLoader.ts` (GLTFLoader com KTX2 + Draco + Meshopt e
+JSDoc de dispose), transcoders commitados em `public/basis/` e `public/draco/`,
+`scripts/README.md` (uso, dependência de sistema KTX-Software, desvios) e os
+scripts `assets:optimize` / `assets:sync-runtime-3d` no `package.json`.
+
+Achados/correções no processo:
+
+- **KTX2 via binário de sistema** (decisão do orquestrador): o CLI v4 do
+  glTF-Transform (`toktx.ts`) chama `spawn('ktx', ...)`. `ktx` (KTX-Software ≥
+  4.3.0) **não está instalado nesta máquina** — o passo 5 foi validado no
+  caminho de "pula com aviso, GLB continua válido". Com o binário, faz
+  ETC1S (qlevel 128/clevel 1) p/ albedo/AO/máscaras e UASTC (quality 2) p/
+  normal maps, alinhando dimensões a múltiplos de 4 sem nunca ampliar.
+- **Realidades do v4** (desvios documentados no README): sem `resize`/`etc1s`/
+  `uastc` standalone — resize via `textureCompress({ resize })` com fallback
+  puro JS (ndarray + ndarray-pixels + ndarray-lanczos); `draco()` exige
+  `draco3dgltf` e `meshopt()` exige `meshoptimizer` (encoders WASM npm, sem
+  binário de sistema). DevDeps = 4 da nota + `draco3dgltf`, `meshoptimizer`,
+  `ndarray`, `ndarray-pixels`, `ndarray-lanczos`.
+- **Bug real do meshopt**: sem registrar `KHRMeshQuantization` no IO, o meshopt
+  quantizava POSITION p/ SHORT normalized mas a extensão não era escrita →
+  GLB inválido (`MESH_PRIMITIVE_ATTRIBUTES_ACCESSOR_INVALID_FORMAT`). Corrigido
+  registrando a extensão.
+- **`prune` remove texturas sólidas** (`pruneSolidTextures`): num teste com
+  texturas de cor única, albedo/normal foram trocadas por cor constante de
+  material (comportamento correto do gltf-transform, não bug — revisto o asset
+  de teste com padrão texturizado).
+
+Validação própria: `npm run typecheck` e `npm run build` ok; testes de asset
+com texturas (draco: 178.8 kB → 78.9 kB, resize 2048×1536 → 1024×768, 3
+texturas e slots preservados) e animado (meshopt) passaram no validador; paths
+de erro testados (sem args/arquivo inexistente → exit 2, GLB corrompido → exit
+1, `--help` → exit 0). Scratch de teste em `tmp/` removido antes do commit.
