@@ -13,7 +13,7 @@ const CARDS: Card[] = [
     body: "Entra em VR direto do navegador, sem instalar app nem SDK. O headset é detectado e a sessão abre na hora.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
         <circle cx="12" cy="12" r="2.4" fill="currentColor" />
       </svg>
     ),
@@ -23,7 +23,7 @@ const CARDS: Card[] = [
     body: "Sem headset? A experiência em 3D convencional carrega automaticamente — ninguém fica de fora da conversa.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 17h16M4 12h10M4 7h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        <path d="M4 17h16M4 12h10M4 7h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -32,7 +32,7 @@ const CARDS: Card[] = [
     body: "Orçamento de frame definido, LOD automático por dispositivo. Roda liso até em celular de entrada.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 20 10 8l4 6 3-4 3 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 20 10 8l4 6 3-4 3 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -41,7 +41,7 @@ const CARDS: Card[] = [
     body: "Um link. Abre. Converte. Sem cadastro pra ver a demo, sem app pra baixar antes de sentir o produto.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M13 3 5 14h6l-1 7 9-12h-7l1-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+        <path d="M13 3 5 14h6l-1 7 9-12h-7l1-6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       </svg>
     ),
   },
