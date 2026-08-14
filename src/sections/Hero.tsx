@@ -1,7 +1,10 @@
-import { useCallback, useRef } from "react";
+import { lazy, Suspense, useCallback, useRef } from "react";
 import Button from "../components/Button";
 import GlitchText from "../components/GlitchText";
-import Scene from "../scene/Scene";
+import StaticFallback from "../scene/StaticFallback";
+
+// Code-splitting com React.lazy para reduzir o bundle inicial (Orcamento-de-Performance.md)
+const Scene = lazy(() => import("../scene/Scene"));
 
 export default function Hero() {
   const glowRef = useRef<HTMLDivElement>(null);
@@ -27,7 +30,18 @@ export default function Hero() {
   return (
     <section className="hero" id="hero" onPointerMove={onPointerMove}>
       <div className="hero__glow" ref={glowRef} aria-hidden="true" />
-      <Scene />
+
+      {/* Canvas 3D carregado sob demanda com fallback estático via Suspense */}
+      <Suspense
+        fallback={
+          <div className="hero__canvas hero__canvas--loading" aria-hidden="true">
+            <StaticFallback />
+          </div>
+        }
+      >
+        <Scene />
+      </Suspense>
+
       <div className="hero__inner enter">
         <p className="eyebrow">WEBXR · SEM INSTALAR · 100% NAVEGADOR</p>
         <h1 className="hero__title" data-text="A REALIDADE TEM UM UPGRADE.">
@@ -49,6 +63,7 @@ export default function Hero() {
           </Button>
         </div>
       </div>
+
       <a href="#filosofia" className="scroll-cue" aria-label="Rolar para a próxima seção">
         <span>role</span>
         <span className="scroll-cue__line" aria-hidden="true" />
