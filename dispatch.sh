@@ -20,10 +20,10 @@ Task: ${PROMPT}"
 
 case "$AGENT" in
   antigravity)
-    agy -p "$CONTEXT" \
+    (cd "$WT" && agy -p "$CONTEXT" \
         --dangerously-skip-permissions \
         --output-format json \
-        --add-dir "$WT"
+        --add-dir "$WT")
     ;;
   opencode)
     (cd "$WT" && opencode run --model opencode/big-pickle "$CONTEXT")
