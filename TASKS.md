@@ -6,7 +6,7 @@
 | 4   | Remover Portal 3D + lógica immersive-vr | opencode | done | feat/task-4 (merged em dev) |
 | 5   | Permissão de câmera + fluxo de erro | opencode | done (⚠️ ver nota) | feat/task-5 (merged em dev) |
 | 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (merged em dev) |
-| 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done   | feat/task-7 (merged em dev) |
+| 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done (⚠️ ver ressalva de processo) | feat/task-7 (merged em dev) |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
 
@@ -335,6 +335,53 @@ preferência em 2026-08-14.
 2-3 modelos placeholder em GLB (geometria primitiva aceitável se não houver asset
 final — não bloquear a feature por falta de modelo bonito, ver [[Escopo]]). Julgamento
 visual — antigravity.
+
+> ⚠️ **Achado de processo, não do código**: o `agy` desta task rodou direto na working
+> tree do repositório principal (em `dev`), sem commit — bug real do `dispatch.sh`
+> (o branch `antigravity` do `case $AGENT` nunca fazia `cd "$WT"` antes de invocar
+> `agy`, só passava `--add-dir "$WT"`, que não é suficiente). O processo do `agy`
+> também deu timeout depois de ~5min ("timeout waiting for response"), sem log
+> detalhado do que fez (só `--output-format json`, sem streaming). Achei os arquivos
+> soltos no `git status` do repo principal ao revisar; relocado manualmente via
+> `git stash` (funciona entre worktrees do mesmo repo, preserva binários) para dentro
+> de `../void-task-7`, commitado lá como deveria ter sido desde o início.
+> `dispatch.sh` corrigido (commit `1e1ebda`, direto em `dev`) para o mesmo padrão do
+> branch `opencode`: `(cd "$WT" && agy ...)`. Mesma classe de bug da task 1 original
+> (agente fora de worktree isolado), agora eliminada nos dois branches do script.
+
+**Status: done, com ressalva de processo (não de resultado).** Apesar do timeout, o
+trabalho em si estava completo e de alta qualidade: `scripts/generate-placeholder-
+glasses.mjs` gera 3 modelos programaticamente via `@gltf-transform/core` +
+`GLTFExporter` (Neon Classic — redondo clássico, acid; Cyber Edge — hexagonal cyber,
+violet; Cyberdeck Visor — visor panorâmico tipo headset, magenta), escala métrica real
+(~14cm de largura), e roda cada um pelo `optimize-glb.mjs` da Task 3 automaticamente.
+`useModelSelection.ts` usa `useSyncExternalStore` — decisão de arquitetura não pedida
+por mim, mas correta: sincroniza a seleção entre a árvore DOM (`ModelSelector`) e a
+árvore separada do R3F (`GlassesModel` dentro do `Canvas`) sem prop drilling nem bridge
+manual de Context. `ModelSelector.tsx` implementa o padrão WAI-ARIA radiogroup completo
+(roving tabindex, navegação por setas). `GlassesModel.tsx` usa o `gltfLoader.ts` da
+Task 3 e libera geometria/material/textura do modelo anterior ao trocar de seleção
+(Convencoes-de-Codigo.md).
+
+**Bug real encontrado e corrigido por mim** (não é achado de processo, é bug de
+código): o modelo "Cyberdeck Visor" não aparecia — só os módulos laterais do headset
+renderizavam, a viseira panorâmica ficava invisível. Tentei `side: THREE.DoubleSide`
+primeiro (hipótese de backface culling), não resolveu. Investigando com
+`@gltf-transform/core` (inspecionando bounding box local de cada mesh no GLB final),
+achei a causa real: a `CylinderGeometry` parcial da viseira tinha
+`thetaStart = -visorAngle/2 + Math.PI/2` — esse `+ Math.PI/2` jogava o arco inteiro
+para o lado direito (+X local todo positivo, nunca cruzando o centro), em vez de
+centrá-lo no eixo frontal (+Z, onde `theta=0` aponta na convenção do
+`CylinderGeometry`). Corrigi removendo o offset (mesma correção nos 3 arcos parciais:
+viseira, brow, LED), regenerei os GLBs e confirmei visualmente — a viseira agora
+conecta os dois módulos, reconhecível como visor de headset.
+
+Validação própria: reproduzi `node scripts/generate-placeholder-glasses.mjs` (gera +
+otimiza os 3, todos passam no `gltf-validator`, bem dentro do orçamento — 10 kB/6.2 kB/
+6.1 kB, alvo é ≤ 3 MB). `npm run typecheck`/`build` ok. Teste visual ao vivo: os 3
+modelos carregam e renderizam corretamente (incluindo o visor corrigido), a troca de
+seleção é instantânea e reflete no Canvas, console sem erros. Merge `feat/task-7 → dev`
+sem conflitos.
 
 ### Task 8 — Ancoragem do GLB nos landmarks faciais
 
