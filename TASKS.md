@@ -524,3 +524,102 @@ precisa de hardware pra isso: `denied` (mensagem certa, sem "Tentar de novo" —
 negação é definitiva), `not-found`, `in-use` (mensagem certa + retry presente, cliquei
 "Tentar de novo" e confirmei que reinvoca `requestCamera()` de verdade). O caminho
 `granted` (vídeo real aparecendo espelhado) fica pendente — ver ressalva acima.
+
+## Checklist final do pivô (build integrado em `dev`, commit `30243e5`)
+
+Rodado contra `dev` depois dos 6 merges (Tasks 4-9), instalação limpa (`rm -rf
+node_modules && npm install`), `npm run typecheck`, `npm run build` e `vite preview`
+na raiz do repo — mesmo rigor do checklist da leva anterior (Tasks 1-3).
+
+### docs/vault/01-Visao-Geral/Requisitos.md (pós-ADR-0003)
+
+- [x] **RF-01** — Permissão de câmera com fluxo de erro claro: 4 razões tipadas
+  (negado/sem câmera/em uso/outro), mensagem específica por razão, retry só quando
+  faz sentido. Testado ao vivo (Task 5).
+- [x] **RF-02** — Detecção facial local, sem enviar vídeo pra servidor:
+  `@mediapipe/tasks-vision` rodando 100% client-side, assets self-hosted em
+  `public/mediapipe/`. Confirmado via smoke test em Node + teste ao vivo no browser
+  (Task 6).
+- [x] **RF-03** — Seletor entre 3 modelos (Neon Classic, Cyber Edge, Cyberdeck Visor).
+  Troca instantânea testada ao vivo (Task 7).
+- [~] **RF-04** — Ancoragem sem jitter perceptível: lógica de suavização
+  rigorosamente testada (14 testes sintéticos, Task 8) e confirmada visualmente com
+  pose sintética variando suavemente (Tasks 8 e 9). **O que falta**: confirmar contra
+  rosto humano real — não testável nesta máquina (sem câmera física).
+- [x] **RF-05** — Vídeo espelhado (selfie) + overlay 3D compostos corretamente.
+  Espelhamento **comprovado** (não só assumido) via teste com marcador assimétrico
+  ("R" → "Я" invertido do lado certo) — Task 9.
+- [x] **RF-06** — Troca de modelo sem reiniciar câmera/detecção: confirmado, o
+  `useModelSelection` é independente do ciclo de vida da câmera (Task 7/9).
+- [x] **RF-07** — Aviso quando o rosto não é detectado ("Posicione seu rosto no
+  quadro"), aparece/some corretamente conforme o estado de detecção (Task 9).
+
+### Não funcionais
+
+- [~] **RNF-01** (latência percebida) — não medida numericamente (dependeria de
+  hardware de câmera real + instrumentação); a suavização foi calibrada visualmente
+  (`smoothingFactor` 0.35) mas o número final de latência-ponta-a-ponta com câmera
+  real não foi cronometrado.
+- [x] **RNF-02/03** (taxa de detecção / peso do bundle inicial) — bundle inicial
+  (`index.js` + CSS) ≈ 268 kB, bem abaixo do teto de 5 MB; confirmado via Network tab
+  que `vision_bundle` (MediaPipe) só é buscado quando a câmera é ligada, não no load
+  inicial. O chunk `TryOnStage` (~1 MB, Three.js/R3F/GLBs) carrega em paralelo ao
+  primeiro paint via `Suspense`, sem bloquear a CTA (RF-01 continua satisfeito).
+- [x] **RNF-04** (compatibilidade) — sem dependência de WebXR/`navigator.xr` em
+  lugar nenhum do código (confirmado, `grep` limpo desde a Task 4); depende só de
+  `getUserMedia` + WASM, suporte bem mais amplo que WebXR.
+- [~] **RNF-05** (contraste AA) — verificado por design em todos os componentes
+  novos (`ModelSelector`, `CameraPermissionGate`, `TryOnStage`), não medido com
+  ferramenta de contraste dedicada.
+- [x] **RNF-06** (HTTPS) — `localhost` cobre o desenvolvimento; `getUserMedia`
+  seguiria a mesma regra de contexto seguro documentada em Setup-do-Ambiente.md
+  quando for pra produção com domínio real.
+- [x] **RNF-07** (dado pessoal) — nenhum frame de vídeo ou matriz facial sai do
+  dispositivo em nenhum ponto do código (confirmado por leitura de todos os hooks
+  novos — `useCamera`, `useFaceLandmarker`, `useFaceTracking` — nenhum tem
+  `fetch`/requisição de rede com esses dados).
+- [x] **RNF-08** (fallback sem câmera/detecção) — testado exaustivamente: negado,
+  sem câmera, em uso, MediaPipe carregando, erro de MediaPipe — todos com mensagem
+  clara, nenhum crash (Tasks 5-6).
+- [x] **RNF-10** (licenciamento) — `@mediapipe/tasks-vision` é Apache-2.0, resto da
+  stack já era MIT/Apache-2.0 desde ADR-0002.
+
+### docs/vault/06-Analytics-e-Tracking/LGPD-e-Consentimento.md — checklist de dados faciais/câmera
+
+- [x] Nenhum dado de pose/landmark facial enviado para fora do dispositivo
+- [x] Aviso de contexto antes do prompt nativo de permissão de câmera
+  ("Para o try-on, o VOID liga a câmera... nada sai do aparelho")
+- [x] Câmera encerrada (`track.stop()`) ao sair da feature — `useCamera.ts` faz isso
+  no cleanup e no `stopCamera()` explícito
+- [x] Indicador visível de câmera ativa enquanto a sessão roda ("Câmera ativa" +
+  ponto pulsante) — além do indicador nativo do navegador/SO
+
+### Pendências reais, explícitas, não escondidas
+
+1. **Validação com câmera e rosto humano reais** — esta máquina não tem câmera
+   física. Toda a lógica foi validada com dados sintéticos (matrizes fabricadas,
+   `MediaStream` de canvas) e smoke tests em Node — rigorosos, mas não substituem
+   testar com uma pessoa de verdade na frente da câmera. Isso cobre: precisão do
+   MediaPipe contra rosto real, convenção de eixos da matriz facial (risco conhecido
+   e não confirmado de orientação espelhada/invertida — ver nota da Task 8), jitter
+   real (não sintético), e alinhamento vídeo↔3D com a proporção real da câmera do
+   dispositivo do Rafael.
+2. **Viewport mobile não confirmado visualmente na Task 9** — `resize_window` parou
+   de funcionar nesta sessão (limitação de ambiente, não do código); o CSS é fluido
+   por padrão (`object-fit: cover`, `position: absolute`/`inset: 0`), mas não foi
+   visto rodando numa tela estreita de verdade.
+3. **Um warning do React** ("setState durante render") visto uma vez na Task 9,
+   provavelmente artefato do método de teste (injeção via console fora do ciclo de
+   effects) — não reproduzido, não confirmado como bug, mas não descartado com
+   certeza absoluta.
+4. **Cópia de marketing parcialmente desatualizada** — Hero foi atualizado na Task 9
+   (eyebrow/subtítulo) porque ficaria inconsistente com a tela de câmera logo abaixo;
+   Filosofia/Benefícios/Como Funciona/Cta continuam com o pitch de VR antigo (sinalizado
+   desde o Passo 1 em `docs/vault/Home.md`, ainda em aberto).
+5. **KTX-Software (`ktx`) não instalado** nesta máquina — os GLBs dos óculos e os
+   assets futuros funcionam sem KTX2 (fallback documentado desde a Task 3), mas
+   perdem o ganho de VRAM até alguém instalar o binário e reotimizar.
+
+Nenhuma dessas pendências bloqueou a fila — todas foram contornadas com validação
+alternativa (testes sintéticos, smoke tests, leitura de código) e documentadas aqui
+pra você decidir o que precisa de atenção antes do merge `dev → main`.
