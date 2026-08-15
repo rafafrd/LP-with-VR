@@ -5,7 +5,7 @@
 | 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
 | 4   | Remover Portal 3D + lógica immersive-vr | opencode | done | feat/task-4 (merged em dev) |
 | 5   | Permissão de câmera + fluxo de erro | opencode | done (⚠️ ver nota) | feat/task-5 (merged em dev) |
-| 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (aguardando merge em dev) |
+| 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (merged em dev) |
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | todo | - |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
@@ -314,6 +314,21 @@ bundle inicial; `dist/index.html` não o referencia) e o `dist/mediapipe/` com o
 assets foi servido 200 via `vite preview`. **Pendente**: detecção de rosto real
 com câmera física (ver ressalva da Task 5 — máquina sem câmera); o smoke test cobre
 o "carregou + inferência roda", o frame com rosto de verdade fica pro Rafael.
+
+Validação adicional minha: reproduzi o `assets:smoke-mediapipe` de forma independente
+(mesmo resultado). Fui além do smoke test em Node e testei o loop **ao vivo no
+browser**: simulei `getUserMedia` devolvendo um `MediaStream` real via
+`canvas.captureStream()` (canvas animado, sem câmera física nenhuma) — confirmei
+visualmente que o vídeo toca, `frameCount` incrementa continuamente (0→4 em ~3s),
+"Nenhum rosto detectado" aparece corretamente (o canvas não tem rosto de verdade —
+resultado esperado, não falha) e "Desligar câmera" limpa tudo de volta pro estado
+idle. Isso prova o pipeline completo (vídeo → MediaPipe WASM → `detectForVideo` →
+estado React → UI) funcionando de ponta a ponta, mesmo sem câmera física — só falta
+mesmo um rosto humano real na frente da câmera pra validar a detecção em si.
+
+Decisão registrada (perguntei via `AskUserQuestion`): manter os ~27 MB de assets do
+MediaPipe comitados no git (não gerar via `postinstall`) — Rafael confirmou essa
+preferência em 2026-08-14.
 
 ### Task 7 — Seletor de modelos de óculos/headset
 
