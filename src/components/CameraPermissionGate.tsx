@@ -1,28 +1,16 @@
-import { useEffect, useRef } from "react";
 import { useCamera } from "../hooks/useCamera";
-import type { CameraErrorReason } from "../hooks/useCamera";
-import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
+import type { CameraError, CameraErrorReason, CameraStatus } from "../hooks/useCamera";
 
 /**
- * Gate de permissão de câmera (DOM, não 3D) — Task 5 + Task 6.
+ * Gate de permissão de câmera (DOM, não 3D) — Task 5 (Atualizado na Task 9).
  *
- * Fluxo: contexto + botão explícito -> prompt nativo (requestCamera) ->
- * pré-visualização espelhada do stream OU mensagem de erro por razão.
- * O prompt nativo do navegador só aparece depois do clique em "Ligar câmera"
- * (LGPD-e-Consentimento.md: aviso de contexto antes do prompt nativo).
- *
- * Task 6: quando a câmera está ativa, roda o `useFaceLandmarker` sobre o
- * <video> e mostra o resultado da detecção (rosto presente/ausente + contador
- * de frames) — integração temporária só pra provar que o loop de detecção
- * funciona; o layout definitivo (vídeo como fundo + canvas 3D por cima) é a
- * Task 9, e a ancoragem do GLB na matriz facial é a Task 8.
- *
- * Temporário: vive dentro de Scene.tsx só pra validação com câmera real.
+ * Responsabilidades:
+ * - Apresentar aviso claro de contexto e privacidade antes de solicitar a câmera (LGPD).
+ * - Fornecer botão de ação explícito "Ligar câmera" para disparar `getUserMedia`.
+ * - Exibir estados de carregamento ("Solicitando...") e erros específicos com orientações claras.
+ * - Permitir retry inteligente apenas para falhas recuperáveis (não insiste em `denied` definitivo).
  */
 
-// Tentar de novo só faz sentido quando o erro é contornável do lado do usuário:
-// denied é definitivo (o navegador não re-pergunta depois de negado) e
-// insecure-context não se resolve com um clique (muda pra HTTPS).
 const RETRYABLE_REASONS: ReadonlySet<CameraErrorReason> = new Set([
   "not-found",
   "in-use",
@@ -41,104 +29,37 @@ const ERROR_COPY: Record<CameraErrorReason, string> = {
   other: "",
 };
 
-export default function CameraPermissionGate() {
-  const { status, stream, error, requestCamera, stopCamera } = useCamera();
-  const videoRef = useRef<HTMLVideoElement>(null);
+export type CameraPermissionGateProps = {
+  status?: CameraStatus;
+  error?: CameraError | null;
+  onRequestCamera?: () => Promise<void> | void;
+  className?: string;
+};
 
-  // Task 6: só carrega o MediaPipe (chunk lazy) e roda a detecção quando a
-  // câmera está ativa — o gate desmonta o <video> quando não está granted.
-  const face = useFaceLandmarker(
-    videoRef,
-    status === "granted" && stream != null,
-  );
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !stream) return;
-    video.srcObject = stream;
-    return () => {
-      if (video.srcObject === stream) {
-        video.srcObject = null;
-      }
-    };
-  }, [stream]);
-
-  // Câmera ativa: pré-visualização espelhada + indicador visível de câmera
-  // ligada (LGPD-e-Consentimento.md) + botão pra encerrar o stream.
-  if (status === "granted" && stream) {
-    return (
-      <div
-        className="camera-gate camera-gate--live"
-        role="region"
-        aria-label="Pré-visualização da câmera"
-      >
-        <div className="camera-gate__top">
-          <span className="camera-gate__badge">Câmera ativa</span>
-          <button
-            type="button"
-            className="camera-gate__btn camera-gate__btn--ghost"
-            onClick={stopCamera}
-          >
-            Desligar câmera
-          </button>
-        </div>
-        <video
-          ref={videoRef}
-          className="camera-gate__video"
-          autoPlay
-          muted
-          playsInline
-          aria-label="Pré-visualização da câmera (espelhada)"
-        />
-        <div className="camera-gate__detection">
-          {face.status === "loading" && (
-            <p className="camera-gate__detection-text">
-              <span className="camera-gate__spinner" aria-hidden="true" />
-              Carregando modelo de detecção facial…
-            </p>
-          )}
-
-          {face.status === "error" && (
-            <p className="camera-gate__detection-text camera-gate__detection-text--error">
-              Falha na detecção facial: {face.error}
-            </p>
-          )}
-
-          {face.status === "ready" && (
-            <p
-              className={`camera-gate__detection-text camera-gate__detection-text--${face.detected ? "ok" : "empty"}`}
-            >
-              <span aria-live="polite">
-                {face.detected
-                  ? "Rosto detectado"
-                  : "Nenhum rosto detectado"}
-              </span>
-              <span className="camera-gate__detection-meta">
-                {face.frameCount} frame(s) analisado(s)
-                {face.detected && face.facialTransformationMatrix
-                  ? " · matriz 4×4 ✓"
-                  : ""}
-              </span>
-            </p>
-          )}
-        </div>
-        <p className="camera-gate__hint">
-          Pré-visualização espelhada (como selfie) — o layout final, com o vídeo
-          de fundo e o 3D por cima, chega na Task 9.
-        </p>
-      </div>
-    );
-  }
+export default function CameraPermissionGate({
+  status: propStatus,
+  error: propError,
+  onRequestCamera: propRequestCamera,
+  className = "",
+}: CameraPermissionGateProps) {
+  // Permite uso autônomo ou orquestrado via props pelo TryOnStage
+  const fallbackCamera = useCamera();
+  const status = propStatus ?? fallbackCamera.status;
+  const error = propError !== undefined ? propError : fallbackCamera.error;
+  const requestCamera = propRequestCamera ?? fallbackCamera.requestCamera;
 
   const isRequesting = status === "requesting";
 
   return (
     <div
-      className="camera-gate"
+      className={`camera-gate ${className}`}
       role="region"
-      aria-label="Permissão de câmera"
+      aria-label="Permissão de câmera para prova virtual"
     >
-      <p className="camera-gate__title">Prova virtual</p>
+      <div className="camera-gate__header">
+        <span className="camera-gate__tag">TRY-ON 3D</span>
+        <h2 className="camera-gate__title">Prova Virtual</h2>
+      </div>
 
       <div
         className="camera-gate__status"
@@ -148,15 +69,14 @@ export default function CameraPermissionGate() {
         {isRequesting && (
           <p className="camera-gate__text">
             <span className="camera-gate__spinner" aria-hidden="true" />
-            Solicitando permissão de câmera…
+            Solicitando permissão de câmera no navegador…
           </p>
         )}
 
         {status === "idle" && (
           <p className="camera-gate__text">
-            Para o try-on, o VOID liga a câmera frontal do seu dispositivo. Nada
-            do que ela captura sai do aparelho — o processamento acontece 100%
-            no seu navegador.
+            Experimente os modelos de óculos VOID no seu rosto em tempo real.
+            O processamento facial ocorre 100% no seu navegador — nenhum vídeo ou dado biométrico sai do dispositivo.
           </p>
         )}
 
@@ -182,7 +102,7 @@ export default function CameraPermissionGate() {
 
         {isRequesting && (
           <button type="button" className="camera-gate__btn" disabled>
-            Aguardando…
+            Aguardando permissão…
           </button>
         )}
 
