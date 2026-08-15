@@ -8,7 +8,7 @@
 | 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (merged em dev) |
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done (⚠️ ver ressalva de processo) | feat/task-7 (merged em dev) |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
-| 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
+| 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -441,6 +441,57 @@ considerar a Task 8 fechada de ponta a ponta.
 
 Vídeo da câmera como fundo, espelhado (como selfie), óculos por cima, alinhados ao
 mesmo espaço de coordenadas do vídeo. Antigravity.
+
+> ⚠️ **Achado de processo (3ª vez seguida)**: `agy` deu timeout de novo (~296s). Desta
+> vez o `dispatch.sh` já comitou o trabalho automaticamente (fix da Task 8), sem
+> precisar de resgate manual — o processo de mitigação amadureceu junto com o pivô.
+
+**Status: done, com ressalvas (não de qualidade — o resultado é muito bom).**
+`TryOnStage.tsx` unifica o que as Tasks 5-8 tinham em painéis soltos num único stage:
+vídeo como fundo (`object-fit: cover`), Canvas R3F (`AnchoredGlasses`) sobreposto no
+mesmo espaço, espelhamento (selfie) aplicado no **container comum** de vídeo+canvas via
+`scaleX(-1)` — não em cada peça separada, nem tentando inverter coordenadas no espaço
+3D, exatamente para não desalinhar a leitura bruta do MediaPipe (recomendação que eu
+tinha dado no prompt, seguida à risca). Camada de UI (badge, botão desligar, prompt
+"posicione seu rosto", seletor de modelos) fica **não espelhada**, por cima, para
+texto/botões continuarem legíveis — detalhe que eu não tinha especificado, e é a
+decisão certa. Novo `AdaptiveCameraController` em `Scene.tsx` ajusta FOV/aspect da
+câmera 3D pra bater com a proporção do vídeo (FOV vertical canônico do MediaPipe
+~63°, compensado quando o container corta topo/base do vídeo em `object-fit: cover`)
+— matemática de alinhamento genuína, não só estética. `CameraPermissionGate`
+refatorado para aceitar `status`/`error`/`onRequestCamera` via props (o estado da
+câmera subiu pro `TryOnStage`), mantendo uso standalone via fallback interno — boa
+migração, sem quebrar retrocompatibilidade.
+
+**Foi além do pedido, de forma coerente com a task**: atualizou a copy do Hero
+(eyebrow e subtítulo) que ainda falava do pitch de VR antigo — o item que eu tinha
+deixado como observação em aberto em `docs/vault/Home.md` desde o Passo 1. Fazia
+sentido resolver aqui, já que agora há uma tela de câmera+óculos real logo abaixo do
+texto — deixar "WEBXR" do lado disso seria inconsistente. Não mudou o resto da
+cópia (Filosofia/Benefícios/Como Funciona/CTA) — isso continua em aberto.
+
+Validação própria: `npm run typecheck`/`build` ok. Teste visual ao vivo com
+`MediaStream` sintético (`canvas.captureStream()`, sem câmera física): desenhei um "R"
+do lado esquerdo do frame cru e um quadrado do lado direito — confirmei que aparece
+como "Я" invertido do lado direito na tela: **espelhamento de selfie comprovado, não
+só assumido**. Injetei pose sintética (mesma técnica da Task 8): óculos renderizam
+alinhados sobre o vídeo, seguindo a pose sem crash. O prompt RF-07 ("posicione seu
+rosto no quadro") aparece e some corretamente conforme a detecção. Console: um warning
+do React ("Cannot update a component while rendering a different component") apareceu
+**uma vez**, não se repetiu nos frames seguintes apesar do loop de injeção continuar
+rodando — pela leitura do código, todas as chamadas reais a `setGlobalFaceTrackingStatus`
+acontecem dentro de `useEffect`/callbacks assíncronos (nunca durante render), então a
+hipótese mais provável é que o warning veio do meu método de teste (chamar o setter
+direto via console, fora do ciclo normal de effects do React) — **não confirmado como
+bug real**, mas registrado; vale checar de novo com fluxo de câmera de verdade.
+
+**Pendente**: teste em viewport mobile bloqueado pela mesma limitação de ambiente já
+registrada nesta sessão (`resize_window` não aplica — `window.innerWidth` continua
+reportando a largura desktop mesmo depois do resize "ter sucesso"). O CSS usa
+`position: absolute`/`inset: 0`/`object-fit: cover` de ponta a ponta, que é
+inerentemente fluido, mas não foi confirmado visualmente em mobile nesta sessão. Junto
+com a validação de câmera/rosto real já pendente das Tasks 5-8, esses dois itens ficam
+pro Rafael antes de considerar o pivô 100% fechado.
 
 ### Regra de teste visual para as tasks 5-9
 
