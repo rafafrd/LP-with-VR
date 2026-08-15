@@ -6,7 +6,7 @@
 | 4   | Remover Portal 3D + lógica immersive-vr | opencode | done | feat/task-4 (merged em dev) |
 | 5   | Permissão de câmera + fluxo de erro | opencode | done (⚠️ ver nota) | feat/task-5 (merged em dev) |
 | 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (merged em dev) |
-| 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | todo | - |
+| 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done   | feat/task-7 (merged em dev) |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
 

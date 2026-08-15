@@ -1,11 +1,13 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import CameraPermissionGate from "../components/CameraPermissionGate";
+import ModelSelector from "../components/ModelSelector";
 import {
   useExperienceLevel,
   usePerfProfile,
   usePrefersReducedMotion,
 } from "../hooks/usePerfProfile";
+import GlassesModel from "./objects/GlassesModel";
 import StaticFallback from "./StaticFallback";
 
 type SceneContentProps = {
@@ -15,21 +17,17 @@ type SceneContentProps = {
 function SceneContent({ reducedMotion }: SceneContentProps) {
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[0, 2, 4]} intensity={2.5} color="#ffffff" />
-      <pointLight position={[0, 0, 2.5]} intensity={12} color="#cfff04" />
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[0.4, 0.6, 0.8]} intensity={2.2} color="#ffffff" />
+      <directionalLight position={[-0.4, -0.4, -0.6]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[0, 0.1, 0.25]} intensity={0.8} color="#cfff04" />
 
-      {/* OrbitControls calibrado (RF-02):
-          - Limites minDistance/maxDistance para o usuário não perder o objeto
-          - Pan desabilitado para manter o foco centralizado
-          - Damping para suavidade
-          - AutoRotate suspenso quando reducedMotion
-      */}
+      {/* OrbitControls calibrado para visualização do modelo métrico (largura ~14cm) */}
       <OrbitControls
         enablePan={false}
         enableZoom={true}
-        minDistance={2.4}
-        maxDistance={7.5}
+        minDistance={0.14}
+        maxDistance={0.85}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI - Math.PI / 6}
         enableDamping={true}
@@ -38,13 +36,9 @@ function SceneContent({ reducedMotion }: SceneContentProps) {
         autoRotateSpeed={0.6}
       />
 
-      {/* TODO(try-on): conteúdo real da Task 8 — ancoragem do GLB nos landmarks faciais.
-          Placeholder mínimo (anteriormente o VoidPortal): só precisa manter o Canvas
-          montando e renderizando sem erro, não é o visual final. */}
-      <mesh position={[0, 0, 0]}>
-        <torusGeometry args={[1, 0.02, 12, 64]} />
-        <meshBasicMaterial color="#cfff04" />
-      </mesh>
+      {/* Modelo 3D dos óculos/headset selecionado via GLB (Task 7).
+          Na Task 8, este modelo será ancorado nos landmarks faciais do MediaPipe. */}
+      <GlassesModel />
     </>
   );
 }
@@ -72,10 +66,10 @@ export default function Scene() {
       <div
         className="hero__canvas"
         role="region"
-        aria-label="Cena 3D (try-on facial em construção)"
+        aria-label="Cena 3D com modelo de óculos selecionado"
       >
         <Canvas
-          camera={{ position: [0, 0, 4.0], fov: 48 }}
+          camera={{ position: [0, 0, 0.32], fov: 45 }}
           dpr={dpr}
           gl={{
             alpha: true,
@@ -87,9 +81,9 @@ export default function Scene() {
         </Canvas>
       </div>
 
-      {/* Integração temporária (Task 5): o gate de permissão de câmera é DOM,
-          fora do Canvas, só pra validar o fluxo getUserMedia com câmera real.
-          Layout final (vídeo como fundo + canvas 3D por cima) é a Task 9. */}
+      {/* Integração temporária (Task 7): seletor de modelos e gate de permissão
+          de câmera no DOM overlay. O layout final unificado é a Task 9. */}
+      <ModelSelector />
       <CameraPermissionGate />
     </>
   );

@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "assets:optimize": "node scripts/optimize-glb.mjs",
+    "assets:generate-placeholder-glasses": "node scripts/generate-placeholder-glasses.mjs",
     "assets:sync-runtime-3d": "node scripts/sync-runtime-3d.mjs",
     "assets:sync-mediapipe": "node scripts/sync-mediapipe-assets.mjs",
     "assets:smoke-mediapipe": "node scripts/smoke-mediapipe.mjs"
