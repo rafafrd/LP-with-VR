@@ -1,17 +1,23 @@
 import { useEffect, useRef } from "react";
 import { useCamera } from "../hooks/useCamera";
 import type { CameraErrorReason } from "../hooks/useCamera";
+import { useFaceLandmarker } from "../hooks/useFaceLandmarker";
 
 /**
- * Gate de permissão de câmera (DOM, não 3D) — Task 5.
+ * Gate de permissão de câmera (DOM, não 3D) — Task 5 + Task 6.
  *
  * Fluxo: contexto + botão explícito -> prompt nativo (requestCamera) ->
  * pré-visualização espelhada do stream OU mensagem de erro por razão.
  * O prompt nativo do navegador só aparece depois do clique em "Ligar câmera"
  * (LGPD-e-Consentimento.md: aviso de contexto antes do prompt nativo).
  *
- * Temporário: vive dentro de Scene.tsx só pra validação com câmera real; o
- * layout final (vídeo como fundo + canvas 3D por cima) é a Task 9.
+ * Task 6: quando a câmera está ativa, roda o `useFaceLandmarker` sobre o
+ * <video> e mostra o resultado da detecção (rosto presente/ausente + contador
+ * de frames) — integração temporária só pra provar que o loop de detecção
+ * funciona; o layout definitivo (vídeo como fundo + canvas 3D por cima) é a
+ * Task 9, e a ancoragem do GLB na matriz facial é a Task 8.
+ *
+ * Temporário: vive dentro de Scene.tsx só pra validação com câmera real.
  */
 
 // Tentar de novo só faz sentido quando o erro é contornável do lado do usuário:
@@ -38,6 +44,13 @@ const ERROR_COPY: Record<CameraErrorReason, string> = {
 export default function CameraPermissionGate() {
   const { status, stream, error, requestCamera, stopCamera } = useCamera();
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Task 6: só carrega o MediaPipe (chunk lazy) e roda a detecção quando a
+  // câmera está ativa — o gate desmonta o <video> quando não está granted.
+  const face = useFaceLandmarker(
+    videoRef,
+    status === "granted" && stream != null,
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -77,6 +90,38 @@ export default function CameraPermissionGate() {
           playsInline
           aria-label="Pré-visualização da câmera (espelhada)"
         />
+        <div className="camera-gate__detection">
+          {face.status === "loading" && (
+            <p className="camera-gate__detection-text">
+              <span className="camera-gate__spinner" aria-hidden="true" />
+              Carregando modelo de detecção facial…
+            </p>
+          )}
+
+          {face.status === "error" && (
+            <p className="camera-gate__detection-text camera-gate__detection-text--error">
+              Falha na detecção facial: {face.error}
+            </p>
+          )}
+
+          {face.status === "ready" && (
+            <p
+              className={`camera-gate__detection-text camera-gate__detection-text--${face.detected ? "ok" : "empty"}`}
+            >
+              <span aria-live="polite">
+                {face.detected
+                  ? "Rosto detectado"
+                  : "Nenhum rosto detectado"}
+              </span>
+              <span className="camera-gate__detection-meta">
+                {face.frameCount} frame(s) analisado(s)
+                {face.detected && face.facialTransformationMatrix
+                  ? " · matriz 4×4 ✓"
+                  : ""}
+              </span>
+            </p>
+          )}
+        </div>
         <p className="camera-gate__hint">
           Pré-visualização espelhada (como selfie) — o layout final, com o vídeo
           de fundo e o 3D por cima, chega na Task 9.

@@ -85,3 +85,31 @@ npm run assets:sync-runtime-3d
 
 Se preferir não commitar, copie-os manualmente para `public/` (ou sirva de um
 CDN e ajuste os `setTranscoderPath`/`setDecoderPath` em `gltfLoader.ts`).
+
+## Runtime MediaPipe (Task 6)
+
+O Face Landmarker (`@mediapipe/tasks-vision`) precisa de dois tipos de arquivo em
+runtime, ambos servidos de `public/mediapipe/`:
+
+- **Runtime WASM**: `vision_wasm{,_nosimd}_internal.{js,wasm}` — copiados de
+  `node_modules/@mediapipe/tasks-vision/`
+- **Modelo**: `face_landmarker.task` (float16, do storage.googleapis.com do
+  MediaPipe) — **o modelo não vem no pacote npm** (o pacote só embute o runtime
+  WASM), por isso o script baixa do storage oficial.
+
+O `FilesetResolver.forVisionTasks()` monta os caminhos como
+`${basePath}/vision_wasm[_module][_nosimd]_internal.{js,wasm}` — os arquivos são
+publicados **sem renomear**, e o hook usa `basePath: "/mediapipe"`.
+
+Todos os arquivos são **commitados no repo** (runtime funciona offline, mesmo
+princípio do `basis/`/`draco/` da Task 3).
+
+```bash
+npm run assets:sync-mediapipe   # sincroniza WASM + baixa o modelo
+npm run assets:smoke-mediapipe  # valida: carrega WASM + modelo e roda 1 inferência
+```
+
+O smoke test roda o bundle do MediaPipe **em Node** (com shims de
+`document`/`fetch`/WebGL) — prova que os assets estão íntegros e que
+`createFromOptions` + `detect()` funcionam de verdade, sem precisar de
+browser/câmera.

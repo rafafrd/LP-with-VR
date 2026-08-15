@@ -629,6 +629,46 @@ a {
   color: var(--text-dim);
 }
 
+/* Detecção facial (Task 6, temporário até a Task 9) */
+
+.camera-gate__detection {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.camera-gate__detection-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+.camera-gate__detection-text--ok {
+  color: #9bff57;
+}
+
+.camera-gate__detection-text--empty {
+  color: var(--text-dim);
+}
+
+.camera-gate__detection-text--error {
+  color: var(--text);
+}
+
+.camera-gate__detection-meta {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  opacity: 0.85;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .camera-gate__spinner {
     animation: none;
