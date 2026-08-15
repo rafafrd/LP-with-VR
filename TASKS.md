@@ -7,7 +7,7 @@
 | 5   | Permissão de câmera + fluxo de erro | opencode | done (⚠️ ver nota) | feat/task-5 (merged em dev) |
 | 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (merged em dev) |
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done (⚠️ ver ressalva de processo) | feat/task-7 (merged em dev) |
-| 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
+| 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
 
 > Tasks 4-9: pivô de escopo registrado em
@@ -389,6 +389,53 @@ O coração da feature. Usar `facialTransformationMatrixes` do Face Landmarker (
 derivar posição/rotação de landmarks individuais ponto a ponto) + suavização entre
 frames — ver a recomendação técnica detalhada em [[Stack-Tecnologica]] §0. Mais sensível
 a ficar "errado" (jitter) — antigravity, priorizado.
+
+> ⚠️ **Achado de processo (2ª vez seguida)**: o `agy` desta task deu timeout de novo
+> (~292s — quase idêntico ao da Task 7), depois de já ter escrito todo o código real
+> no worktree correto (o fix de `cd "$WT"` da Task 7 funcionou). Como o `dispatch.sh`
+> tinha `set -e`, o script abortava antes do bloco de commit assim que o processo do
+> agente saísse com erro — descartando da vista o trabalho já feito. Corrigido
+> (commit `4df4477`, direto em `dev`): agora o commit acontece de qualquer jeito se
+> houver mudança real no worktree, e só depois o erro do agente é propagado. Commitei
+> manualmente o que já estava lá desta vez.
+
+**Status: done, com ressalvas de processo e de validação (não de qualidade do
+código).** Apesar do timeout, o resultado é sólido: `facePoseSmoother.ts`
+(`FacePoseSmoother` + `decomposeFacialMatrix`) decompõe a matriz 4×4 via
+`THREE.Matrix4.decompose()`, com detecção heurística de unidade (cm→m se algum
+componente de posição passar de 5), suaviza posição via `lerp` e rotação via `slerp`
+(`smoothingFactor` padrão 0.35 — testado e documentado como equilíbrio entre jitter e
+latência), *snap* instantâneo na primeira detecção (não desliza da origem até a
+primeira pose), máquina de estados hold (400ms) → fade-out (400ms) → esconder quando o
+rosto some, zero alocação no `update()`. `useFaceTracking.ts` é a ponte DOM↔R3F (mesmo
+padrão `useSyncExternalStore` da Task 7) — o buffer global da matriz é lido direto no
+`useFrame` de `AnchoredGlasses.tsx`, sem re-render React por frame. `AnchoredGlasses`
+envolve o `GlassesModel` (Task 7) e expõe props `matrix`/`forceTrackingMode` pensadas
+para QA sintética. `OrbitControls` agora desabilita durante tracking ativo (não faz
+sentido orbitar livremente enquanto o modelo está ancorado no rosto).
+
+Validação própria, já que o agente não chegou a escrever a validação que eu tinha
+pedido: escrevi e rodei **14 testes sintéticos standalone** (Node, sem browser) contra
+`FacePoseSmoother`/`decomposeFacialMatrix` — conversão de unidade, atenuação de um
+salto de ruído de 1 frame (não aplica o alvo 100% instantaneamente), snap na primeira
+detecção, timing exato de hold/fade/esconder, quaternion permanece unitário após uma
+sequência de rotações. **Todos os 14 passaram.** `npm run typecheck`/`build` ok.
+
+Teste visual ao vivo (sem câmera física — ver ressalva das Tasks 5/6): injetei dados
+sintéticos direto no buffer global via `import()` dinâmico do módulo
+(`/src/hooks/useFaceTracking.ts`, o Vite serve `.ts` como ESM em dev) simulando uma
+cabeça balançando devagar de um lado pro outro — confirmei visualmente, em várias
+capturas ao longo de ~2s, os óculos seguindo a posição e a rotação de forma suave e
+contínua, sem salto/tremor perceptível entre frames. Console sem erros.
+
+**Pendente, real e explícito**: tracking contra um **rosto humano de verdade** não foi
+e não pode ser validado nesta máquina (sem câmera). A lógica de suavização/timing está
+rigorosamente testada; o que falta é a convenção de eixos da matriz do MediaPipe se
+comportar como esperado contra uma detecção real (o código não teve tempo/dados pra
+confirmar isso empiricamente — risco conhecido, não confirmado, de orientação
+espelhada/invertida precisar de ajuste quando testado com câmera real) e a
+qualidade/precisão do tracking em si. Fica pro Rafael validar com câmera real antes de
+considerar a Task 8 fechada de ponta a ponta.
 
 ### Task 9 — Overlay vídeo + canvas 3D compostos
 
