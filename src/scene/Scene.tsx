@@ -2,12 +2,13 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import CameraPermissionGate from "../components/CameraPermissionGate";
 import ModelSelector from "../components/ModelSelector";
+import { useFaceTracking } from "../hooks/useFaceTracking";
 import {
   useExperienceLevel,
   usePerfProfile,
   usePrefersReducedMotion,
 } from "../hooks/usePerfProfile";
-import GlassesModel from "./objects/GlassesModel";
+import AnchoredGlasses from "./objects/AnchoredGlasses";
 import StaticFallback from "./StaticFallback";
 
 type SceneContentProps = {
@@ -15,6 +16,9 @@ type SceneContentProps = {
 };
 
 function SceneContent({ reducedMotion }: SceneContentProps) {
+  const { status } = useFaceTracking();
+  const isTrackingActive = status === "ready";
+
   return (
     <>
       <ambientLight intensity={0.9} />
@@ -22,23 +26,23 @@ function SceneContent({ reducedMotion }: SceneContentProps) {
       <directionalLight position={[-0.4, -0.4, -0.6]} intensity={0.8} color="#ffffff" />
       <pointLight position={[0, 0.1, 0.25]} intensity={0.8} color="#cfff04" />
 
-      {/* OrbitControls calibrado para visualização do modelo métrico (largura ~14cm) */}
+      {/* OrbitControls ativo durante o modo preview; desabilitado durante tracking facial */}
       <OrbitControls
+        enabled={!isTrackingActive}
         enablePan={false}
-        enableZoom={true}
+        enableZoom={!isTrackingActive}
         minDistance={0.14}
         maxDistance={0.85}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI - Math.PI / 6}
         enableDamping={true}
         dampingFactor={0.05}
-        autoRotate={!reducedMotion}
+        autoRotate={!reducedMotion && !isTrackingActive}
         autoRotateSpeed={0.6}
       />
 
-      {/* Modelo 3D dos óculos/headset selecionado via GLB (Task 7).
-          Na Task 8, este modelo será ancorado nos landmarks faciais do MediaPipe. */}
-      <GlassesModel />
+      {/* Modelo 3D dos óculos/headset com ancoragem e suavização nos landmarks faciais (Task 8) */}
+      <AnchoredGlasses />
     </>
   );
 }

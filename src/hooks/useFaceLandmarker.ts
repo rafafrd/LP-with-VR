@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
+import {
+  setGlobalFaceTrackingStatus,
+  setGlobalFacialTrackingData,
+} from "./useFaceTracking";
 
 /**
  * Detecção facial em tempo real com o MediaPipe Face Landmarker — Task 6.
@@ -77,11 +81,13 @@ export function useFaceLandmarker(
       setFacialTransformationMatrix(null);
       setError(null);
       setFrameCount(0);
+      setGlobalFaceTrackingStatus("idle");
       return;
     }
 
     let cancelled = false;
     setStatus("loading");
+    setGlobalFaceTrackingStatus("loading");
 
     (async () => {
       try {
@@ -116,10 +122,13 @@ export function useFaceLandmarker(
 
         landmarkerRef.current = landmarker;
         setStatus("ready");
+        setGlobalFaceTrackingStatus("ready");
       } catch (err) {
         if (cancelled) return;
+        const msg = toErrorMessage(err);
         setStatus("error");
-        setError(toErrorMessage(err));
+        setError(msg);
+        setGlobalFaceTrackingStatus("error", msg);
       }
     })();
 
@@ -127,6 +136,7 @@ export function useFaceLandmarker(
       cancelled = true;
       landmarkerRef.current?.close();
       landmarkerRef.current = null;
+      setGlobalFaceTrackingStatus("idle");
     };
   }, [enabled]);
 
@@ -151,19 +161,26 @@ export function useFaceLandmarker(
           // `now` é o timestamp de apresentação do frame (DOMHighResTimeStamp
           // em ms) — o MediaPipe exige timestamps estritamente crescentes.
           const result = landmarker.detectForVideo(video, now);
-          setDetected(result.faceLandmarks.length > 0);
+          const hasDetected = result.faceLandmarks.length > 0;
+          setDetected(hasDetected);
           const matrixes = result.facialTransformationMatrixes;
-          setFacialTransformationMatrix(
+          const matrix =
             matrixes.length > 0
               ? new Float32Array(matrixes[0].data)
-              : null,
-          );
-          setFrameCount((count) => count + 1);
+              : null;
+          setFacialTransformationMatrix(matrix);
+          setFrameCount((count) => {
+            const nextCount = count + 1;
+            setGlobalFacialTrackingData(matrix, hasDetected, nextCount, now);
+            return nextCount;
+          });
         } catch (err) {
           // Inferência falhou de forma recorrente: não adianta continuar o
           // loop — vira erro visível (RF-07, não falhar silenciosamente).
+          const msg = toErrorMessage(err);
           setStatus("error");
-          setError(toErrorMessage(err));
+          setError(msg);
+          setGlobalFaceTrackingStatus("error", msg);
           return;
         }
       }
