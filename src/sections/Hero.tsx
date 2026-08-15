@@ -4,7 +4,7 @@ import GlitchText from "../components/GlitchText";
 import StaticFallback from "../scene/StaticFallback";
 
 // Code-splitting com React.lazy para reduzir o bundle inicial (Orcamento-de-Performance.md)
-const Scene = lazy(() => import("../scene/Scene"));
+const TryOnStage = lazy(() => import("../components/TryOnStage"));
 
 export default function Hero() {
   const glowRef = useRef<HTMLDivElement>(null);
@@ -31,7 +31,7 @@ export default function Hero() {
     <section className="hero" id="hero" onPointerMove={onPointerMove}>
       <div className="hero__glow" ref={glowRef} aria-hidden="true" />
 
-      {/* Canvas 3D carregado sob demanda com fallback estático via Suspense */}
+      {/* Stage unificado de Try-On (vídeo + canvas 3D) carregado sob demanda com fallback estático */}
       <Suspense
         fallback={
           <div className="hero__canvas hero__canvas--loading" aria-hidden="true">
@@ -39,20 +39,19 @@ export default function Hero() {
           </div>
         }
       >
-        <Scene />
+        <TryOnStage />
       </Suspense>
 
       <div className="hero__inner enter">
-        <p className="eyebrow">WEBXR · SEM INSTALAR · 100% NAVEGADOR</p>
+        <p className="eyebrow">TRY-ON FACIAL · 100% NAVEGADOR · SEM INSTALAR</p>
         <h1 className="hero__title" data-text="A REALIDADE TEM UM UPGRADE.">
           A REALIDADE TEM
           <br />
           <GlitchText text="UM UPGRADE." />
         </h1>
         <p className="hero__sub">
-          VOID é a camada 3D que transforma sua landing page numa experiência que se
-          sente, não só se lê. Sem headset, sem instalar nada — abre no navegador e
-          já funciona.
+          VOID é a experiência de prova virtual em 3D direto no seu navegador.
+          Sem headset, sem baixar aplicativo — ligue a câmera e experimente em tempo real.
         </p>
         <div className="hero__cta">
           <Button href="#acesso" variant="primary">
