@@ -5,7 +5,7 @@
 | 3   | Script pipeline glTF-Transform  | opencode    | done   | feat/task-3 (merged em dev) |
 | 4   | Remover Portal 3D + lógica immersive-vr | opencode | done | feat/task-4 (merged em dev) |
 | 5   | Permissão de câmera + fluxo de erro | opencode | done (⚠️ ver nota) | feat/task-5 (merged em dev) |
-| 6   | Integração MediaPipe Face Landmarker | opencode | todo | - |
+| 6   | Integração MediaPipe Face Landmarker | opencode | done (⚠️ ver ressalva) | feat/task-6 (aguardando merge em dev) |
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | todo | - |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | todo | - |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | todo | - |
@@ -265,6 +265,55 @@ sem ambiguidade visual).
 `@mediapipe/tasks-vision`, loop de detecção rodando sobre o `MediaStream` da Task 5.
 Carregar o runtime/modelo do MediaPipe fora do caminho crítico (mesmo princípio de
 lazy-load já usado pro Canvas — RNF-03 em [[Requisitos]]). Delegado ao opencode.
+
+**Status Task 6: done, com ressalva** (a mesma limitação de câmera da Task 5 se
+aplica — ver ressalva da Task 5 acima). `opencode` entregou:
+
+- `src/hooks/useFaceLandmarker.ts` — hook puro (sem JSX): `import()` dinâmico do
+  `@mediapipe/tasks-vision` (chunk code-splitted, fora do bundle inicial), assets
+  locais de `public/mediapipe/` (sem CDN em runtime, mesmo princípio da Task 3),
+  `createFromOptions` com `delegate: "CPU"`, `runningMode: "VIDEO"`, `numFaces: 1`,
+  `outputFaceBlendshapes: false`, `outputFacialTransformationMatrixes: true`;
+  loop de detecção via `requestVideoFrameCallback` (fallback `requestAnimationFrame`)
+  com pausa quando o vídeo não está tocando; retorna `{ status, detected,
+  facialTransformationMatrix: Float32Array|null, error, frameCount }`. **Sem
+  suavização** — a matriz 4×4 crua por frame é o input da Task 8 (smoothing lá).
+  Fronteiras respeitadas: não tocou em `useCamera.ts`, não implementou ancoragem
+  (Task 8) nem layout (Task 9).
+- `scripts/sync-mediapipe-assets.mjs` (`assets:sync-mediapipe`) — copia o runtime
+  WASM de `node_modules/@mediapipe/tasks-vision/` e baixa o modelo
+  `face_landmarker.task` (float16) do storage oficial do MediaPipe; assets
+  commitados em `public/mediapipe/` (~27 MB).
+- `scripts/smoke-mediapipe.mjs` (`assets:smoke-mediapipe`) — smoke test **em Node**
+  (shims de `document`/`fetch`/WebGL): valida que os 5 arquivos existem, que
+  `FilesetResolver.forVisionTasks` resolve, que `createFromOptions` sobe o grafo
+  ("Graph successfully started running.") e que `detect()` roda inferência real
+  (frame em branco 64×64 → 0 rostos/0 matrizes). Rodou 100% verde.
+- Integração temporária em `CameraPermissionGate.tsx`: quando a câmera está ativa,
+  roda o hook sobre o `<video>` e mostra "Rosto detectado" / "Nenhum rosto
+  detectado" + contador de frames + indicador da matriz 4×4 (`aria-live`), com
+  estados de carregando/erro. CSS `.camera-gate__detection*` seguindo o padrão BEM
+  do gate.
+
+Achados técnicos registrados (importantes pra Task 8):
+
+- **API real do `@mediapipe/tasks-vision@1.0.1`**: `FaceLandmarker.createFromOptions`
+  recebe o `WasmFileset` (retorno de `forVisionTasks`) como 1º argumento, não um
+  path. `detectForVideo(video, timestampMs)` exige timestamp em ms **estritamente
+  crescente**. `facialTransformationMatrixes[].data` é `number[]` (não
+  `Float32Array`) — o hook converte pra `Float32Array` (buffer próprio do chamador).
+- **O modelo `.task` não vem no pacote npm** — só o runtime WASM (`wasm/`). E o
+  export map do pacote não expõe `.../wasm/...`: o caminho válido é
+  `@mediapipe/tasks-vision/vision_wasm_internal.js`.
+- **`forVisionTasks` monta os caminhos como `vision_wasm[_module][_nosimd]_internal`
+  sem renomear** — basePath `/mediapipe` + `public/mediapipe/` resolve.
+
+Validação própria: `npm run typecheck` e `npm run build` ok; o build confirma o
+code-splitting (chunk `vision_bundle-*.js` = 153 kB / 45 kB gzip separado do
+bundle inicial; `dist/index.html` não o referencia) e o `dist/mediapipe/` com os 5
+assets foi servido 200 via `vite preview`. **Pendente**: detecção de rosto real
+com câmera física (ver ressalva da Task 5 — máquina sem câmera); o smoke test cobre
+o "carregou + inferência roda", o frame com rosto de verdade fica pro Rafael.
 
 ### Task 7 — Seletor de modelos de óculos/headset
 

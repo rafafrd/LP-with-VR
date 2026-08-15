@@ -10,13 +10,16 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "assets:optimize": "node scripts/optimize-glb.mjs",
-    "assets:sync-runtime-3d": "node scripts/sync-runtime-3d.mjs"
+    "assets:sync-runtime-3d": "node scripts/sync-runtime-3d.mjs",
+    "assets:sync-mediapipe": "node scripts/sync-mediapipe-assets.mjs",
+    "assets:smoke-mediapipe": "node scripts/smoke-mediapipe.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "react": "^19.2.8",
