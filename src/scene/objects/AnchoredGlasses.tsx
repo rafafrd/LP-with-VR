@@ -9,6 +9,28 @@ import { FacePoseSmoother } from "../../lib/facePoseSmoother";
 import GlassesModel from "./GlassesModel";
 
 /**
+ * Deslocamento vertical (metros, espaço local do rosto) entre a origem da
+ * `facialTransformationMatrix` do MediaPipe e a altura dos olhos.
+ *
+ * A origem da matriz acompanha o modelo canônico de rosto do MediaPipe, que fica
+ * mais perto do nariz do que do nível dos olhos — sem esse deslocamento, o GLB
+ * (modelado com seu próprio pivô na altura das lentes, ver
+ * `scripts/generate-placeholder-glasses.mjs`) aparece "caído" sobre o nariz em vez
+ * de apoiado na altura dos olhos.
+ *
+ * Aplicado em espaço local (rotacionado pelo quaternion da pose) para acompanhar a
+ * inclinação da cabeça, não o eixo Y do mundo.
+ *
+ * Valor inicial estimado por anatomia (distância nariz→olhos ~2-2.5cm); esta máquina
+ * não tem câmera física para calibrar contra um rosto real (ver TASKS.md, pendência
+ * da Task 8). Ajuste este valor — ou a prop `eyeLevelOffsetM` — olhando a câmera real.
+ */
+const EYE_LEVEL_OFFSET_M = 0.022;
+
+// Objeto reutilizado fora do useFrame para ZERO alocação em runtime (Convencoes-de-Codigo.md - Regra 1)
+const _offsetLocal = new THREE.Vector3();
+
+/**
  * Propriedades para o componente de ancoragem facial (Task 8 / RF-04).
  */
 export type AnchoredGlassesProps = {
@@ -40,6 +62,13 @@ export type AnchoredGlassesProps = {
    * Força o modo de rastreamento mesmo se o status for idle (útil para QA visual).
    */
   forceTrackingMode?: boolean;
+
+  /**
+   * Deslocamento vertical (metros, espaço local do rosto) da origem da matriz facial
+   * até a altura dos olhos. Ver `EYE_LEVEL_OFFSET_M`. Padrão: 0.022 (2.2cm).
+   * Exposto como prop para calibração rápida com câmera real, sem editar código.
+   */
+  eyeLevelOffsetM?: number;
 };
 
 /**
@@ -49,6 +78,8 @@ export type AnchoredGlassesProps = {
  * Características:
  * - Decompõe a matriz 4x4 do MediaPipe (coluna-principal) em posição + quaternion.
  * - Aplica suavização temporal por frame (lerp na posição e slerp no quaternion).
+ * - Corrige a altura da âncora do nível do nariz (origem crua da matriz) para o nível
+ *   dos olhos via `eyeLevelOffsetM` (ver `EYE_LEVEL_OFFSET_M`).
  * - Zero alocação de memória no render loop `useFrame` (Convencoes-de-Codigo.md — Regra 1).
  * - Máquina de estados para tolerância a oclusão/perda de frames: hold por 400ms e fade-out suave.
  * - Quando em modo preview (câmera desligada), mantém o modelo centralizado em [0, 0, 0] para inspeção via OrbitControls.
@@ -59,6 +90,7 @@ export default function AnchoredGlasses({
   fadeDurationMs = 400,
   matrix: overrideMatrix,
   forceTrackingMode = false,
+  eyeLevelOffsetM = EYE_LEVEL_OFFSET_M,
 }: AnchoredGlassesProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { status } = useFaceTracking();
@@ -92,8 +124,12 @@ export default function AnchoredGlasses({
 
       if (pose.visible) {
         group.visible = true;
-        group.position.copy(pose.position);
         group.quaternion.copy(pose.quaternion);
+        // Sobe da origem da matriz do MediaPipe (perto do nariz) até a altura dos
+        // olhos, rotacionado pela pose atual para acompanhar a inclinação da cabeça
+        // (não é um deslocamento no eixo Y do mundo — ver EYE_LEVEL_OFFSET_M acima).
+        _offsetLocal.set(0, eyeLevelOffsetM, 0).applyQuaternion(group.quaternion);
+        group.position.copy(pose.position).add(_offsetLocal);
         // Aplica a escala resultante da atenuação/fade
         group.scale.copy(pose.scale);
       } else {

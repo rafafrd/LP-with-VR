@@ -623,3 +623,27 @@ na raiz do repo — mesmo rigor do checklist da leva anterior (Tasks 1-3).
 Nenhuma dessas pendências bloqueou a fila — todas foram contornadas com validação
 alternativa (testes sintéticos, smoke tests, leitura de código) e documentadas aqui
 pra você decidir o que precisa de atenção antes do merge `dev → main`.
+
+## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
+
+Confirmação do risco conhecido e não confirmado da Task 8 ("orientação
+espelhada/invertida a ajustar quando testado com câmera real"): Rafael testou com
+câmera física real e reportou os óculos ancorados na altura do nariz, não dos olhos.
+
+**Causa**: a origem de `facialTransformationMatrixes` do MediaPipe acompanha o modelo
+canônico de rosto (mais perto do nariz), não a altura dos olhos onde o GLB dos óculos
+foi modelado (pivô nas lentes — ver `scripts/generate-placeholder-glasses.mjs`).
+Corrigido diretamente por mim (achado de bug pontual em código já revisado, mesmo
+padrão da Task 4/7 — não reaberto como task nova na fila do `dispatch.sh`), sem
+delegar: `AnchoredGlasses.tsx` agora soma um deslocamento vertical
+(`EYE_LEVEL_OFFSET_M`, constante + prop `eyeLevelOffsetM`) à posição ancorada, aplicado
+em espaço local (rotacionado pelo quaternion da pose) para acompanhar a inclinação da
+cabeça em vez de deslocar no eixo Y do mundo.
+
+**Pendência real**: o valor inicial (2.2cm) é uma estimativa por anatomia (distância
+nariz→olhos), não calibrado contra rosto real — esta máquina segue sem câmera física
+(mesma limitação de todas as tasks 5-9). `npm run typecheck`/`build` ok; sem teste
+visual ao vivo desta vez (extensão Claude-in-Chrome não conectou nesta sessão).
+Rafael: ajuste `EYE_LEVEL_OFFSET_M` em `src/scene/objects/AnchoredGlasses.tsx` (ou passe
+`eyeLevelOffsetM` como prop) olhando a câmera real até os óculos alinharem nos olhos —
+o hot reload do Vite deixa isso rápido de iterar.
