@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import Button from "../components/Button";
 import InteractiveTiltCard from "../components/InteractiveTiltCard";
 import Reveal from "../components/Reveal";
@@ -6,6 +7,9 @@ import {
   useModelSelection,
   type GlassesModelId,
 } from "../hooks/useModelSelection";
+import StaticFallback from "../scene/StaticFallback";
+
+const ExplodedStudio = lazy(() => import("../components/ExplodedStudio"));
 
 export default function Showcase() {
   const { selectedId, selectModel } = useModelSelection();
@@ -119,6 +123,19 @@ export default function Showcase() {
             );
           })}
         </div>
+
+        {/* Laboratório Interativo de Visão Explodida 3D */}
+        <Reveal variant="scale-up" delayMs={200} className="showcase__exploded-wrap">
+          <Suspense
+            fallback={
+              <div className="exploded-studio" style={{ minHeight: "480px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <StaticFallback />
+              </div>
+            }
+          >
+            <ExplodedStudio />
+          </Suspense>
+        </Reveal>
 
         {/* Destaque Tecnológico de Acabamento com Tilt Suave */}
         <Reveal variant="fade-up" delayMs={300} className="showcase__spotlight">

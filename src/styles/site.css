@@ -3648,3 +3648,543 @@ button {
   }
 }
 
+/* ==========================================================================
+   LABORATÓRIO DE ANATOMIA 3D / VISÃO EXPLODIDA (EXPLODED STUDIO)
+   ========================================================================== */
+
+.showcase__exploded-wrap {
+  margin-top: 4.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.exploded-studio {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-bezel);
+  padding: 40px 36px;
+  overflow: hidden;
+  transition: all 0.4s var(--ease);
+}
+
+[data-theme="dark"] .exploded-studio {
+  background: #090e1c;
+  border-color: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.08);
+}
+
+.exploded-studio__container {
+  width: 100%;
+}
+
+.exploded-studio__header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3rem;
+}
+
+.exploded-studio__title {
+  font-size: clamp(1.85rem, 3.8vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.exploded-studio__desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+/* Grade Principal: Viewport 3D + Painel de Engenharia */
+.exploded-studio__stage-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+/* Coluna 3D Viewport */
+.exploded-studio__viewport-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .exploded-studio__viewport-card {
+  background: #060a14;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Barra Superior do Viewport */
+.exploded-studio__top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--line-subtle);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.exploded-studio__model-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exploded-studio__model-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.exploded-studio__model-tab:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.exploded-studio__model-tab--active {
+  background: var(--accent);
+  color: #ffffff !important;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.exploded-studio__tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.exploded-studio__render-modes {
+  display: flex;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+  gap: 2px;
+}
+
+.exploded-studio__mode-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.exploded-studio__mode-btn:hover {
+  color: var(--text);
+}
+
+.exploded-studio__mode-btn.is-active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Canvas 3D e Dica */
+.exploded-studio__canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  min-height: 380px;
+  background: radial-gradient(circle at center, var(--bg-elevated) 0%, var(--bg-subtle) 100%);
+  overflow: hidden;
+  cursor: grab;
+}
+
+.exploded-studio__canvas-wrapper:active {
+  cursor: grabbing;
+}
+
+.exploded-studio__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exploded-studio__canvas-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.exploded-studio__canvas-hint svg {
+  width: 12px;
+  height: 12px;
+  color: var(--accent);
+}
+
+/* Barra Inferior com Slider e Presets */
+.exploded-studio__bottom-bar {
+  padding: 16px 20px;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--line-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exploded-studio__slider-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.exploded-studio__slider-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.exploded-studio__slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-strong);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.exploded-studio__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.exploded-studio__slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.exploded-studio__slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.exploded-studio__slider-val {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--accent);
+  min-width: 42px;
+  text-align: right;
+}
+
+.exploded-studio__presets-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exploded-studio__preset-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.exploded-studio__preset-btn:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.exploded-studio__preset-btn.is-active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Painel Lateral de Especificações de Engenharia */
+.exploded-studio__info-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.exploded-studio__spec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .exploded-studio__spec-card {
+  background: #0d1424;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.exploded-studio__spec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.exploded-studio__spec-cat {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+.exploded-studio__spec-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.exploded-studio__spec-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.exploded-studio__material-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exploded-studio__mat-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.exploded-studio__mat-val {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.exploded-studio__spec-desc {
+  font-size: 0.84rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.exploded-studio__highlight-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 22px;
+}
+
+.exploded-studio__highlight-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.exploded-studio__highlight-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.exploded-studio__highlight-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.exploded-studio__hl-title {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.exploded-studio__hl-val {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.exploded-studio__parts-picker {
+  margin-bottom: 22px;
+}
+
+.exploded-studio__parts-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.exploded-studio__parts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.exploded-studio__part-btn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s var(--ease);
+}
+
+.exploded-studio__part-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.exploded-studio__part-btn--active {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--accent) !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.exploded-studio__actions {
+  margin-top: auto;
+}
+
+.exploded-studio__btn-try {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Responsividade do ExplodedStudio */
+@media (max-width: 992px) {
+  .exploded-studio {
+    padding: 28px 20px;
+  }
+  .exploded-studio__stage-grid {
+    grid-template-columns: 1fr;
+  }
+  .exploded-studio__canvas-wrapper {
+    aspect-ratio: 16 / 12;
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .exploded-studio__top-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .exploded-studio__render-modes {
+    width: 100%;
+    justify-content: space-around;
+  }
+  .exploded-studio__mode-btn {
+    flex: 1;
+    text-align: center;
+  }
+  .exploded-studio__parts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
