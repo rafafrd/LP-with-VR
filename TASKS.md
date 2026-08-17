@@ -9,7 +9,7 @@
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done (⚠️ ver ressalva de processo) | feat/task-7 (merged em dev) |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
-| 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo | — |
+| 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo (1ª tentativa falhou, ver nota) | — |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -675,6 +675,19 @@ matriz pronta, não pontos individuais — motivo de jitter). Não mexer em câm
 `useFaceTracking.ts`) simulando a cabeça virando ~45-90° e confirmar visualmente (screenshot)
 que a haste do lado oposto vai sumindo em vez de ficar flutuando por cima do fundo — não
 pular esse teste antes de marcar `done`.
+
+> ⚠️ **1ª tentativa de dispatch falhou (2026-08-17, ~08:36-08:41)**: erro interno do `agy`
+> depois de 298s — `"cannot kill task ... status: DONE"` (parece corrida/bug interno do
+> cortex do agente, não algo do nosso prompt/código). Saiu com código 1, **nenhuma mudança
+> gerada** no worktree (`../void-task-10` ficou vazio, removido). ~347k tokens consumidos
+> sem produzir diff. Falha de infraestrutura do agente, não do escopo da task — retry
+> pendente. Achado extra desta sessão: enquanto isso rodava, percebi um **redesign completo
+> da landing page** já em andamento na working tree de `dev` (outro processo, não esta
+> dispatch) — troca de paleta de "void" neon (acid/violet/magenta) para uma estética clara
+> estilo Apple ("cloud"/"slate"/"apple blue"). Isso **contradiz a instrução que dei no
+> prompt da Task 10** de recolorir os óculos pra `#cfff04`/`#8b5cf6`/`#ff2e6a` — releia o
+> prompt e ajuste a paleta-alvo antes de rodar de novo. Ver seção de documentação do redesign
+> mais abaixo/no vault.
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
