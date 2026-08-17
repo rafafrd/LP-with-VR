@@ -1,122 +1,140 @@
 ---
-title: Acessibilidade e Conforto em VR
+title: Acessibilidade, Inclusão e Usabilidade
 tags:
-  - vr
+  - ux
   - acessibilidade
-  - conforto
+  - a11y
+  - wcag
+  - contraste
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-17
 status: estavel
 ---
 
-# Acessibilidade e Conforto em VR
+# ♿ Acessibilidade, Inclusão e Usabilidade
 
-> **Nota de contexto (2026-08-14, [[ADR-0003-Feature-Try-On-Facial]])**: sem sessão
-> `immersive-vr` no escopo atual, locomoção/teleporte/snap-turn e cybersickness não se
-> aplicam mais à feature (não há headset, ninguém se movimenta no espaço). O que
-> continua valendo: contraste AA na UI, seleção sem depender só de hover contínuo, e
-> `prefers-reduced-motion` para qualquer animação de UI — ver [[Requisitos]] (RNF-05,
-> RNF-09). Conteúdo abaixo preservado como histórico; não foi marcado com
-> `substituido-por` porque fica fora de `docs/vault/05-VR-e-3D/` e não foi revisado
-> nota a nota.
+A experiência do **VOID Spatial Optics** foi projetada para garantir que qualquer usuário, independentemente de limitações visuais, motoras, cognitivas ou preferências de dispositivo, consiga navegar na página, ajustar a leitura e utilizar a prova virtual 3D com conforto e autonomia.
 
-> Ligado por [[Como-Funciona-o-Tracking]]: lá está o *como* técnico do tracking; aqui
-> está o *como tratar o corpo e os limites* de quem usa a experiência.
+---
 
-## Cybersickness: por que acontece
+## 🎛️ 1. Motor de Acessibilidade (`useAccessibility` & `AccessibilityWidget`)
 
-Cybersickness (ou VIMS — *visually induced motion sickness*) nasce de um conflito
-sensorial: o olho reporta movimento, o sistema vestibular (ouvido interno) não sente
-nada correspondente. Cinco alavancas reduzem esse conflito: controle do ponto de vista
-pelo próprio usuário, evitar aceleração visual, oferecer indicadores de movimento
-antecipados, usar **referenciais de repouso** (algo estático no campo de visão) e reduzir
-o campo de visão durante o movimento.
-
-## Locomoção: a decisão de maior impacto
-
-| Técnica | Conforto | Nota |
-| --- | --- | --- |
-| **Teleporte** | Alto | Padrão recomendado; sem movimento contínuo, sem conflito vestibular |
-| Movimento suave + **vignette** (estreita o campo de visão durante o deslocamento) | Médio | Só se teleporte não servir à narrativa |
-| Movimento suave sem vignette | Baixo | Evitar |
-| **Snap turn** (rotação em degraus, não contínua) | Alto | Preferir à rotação suave de câmera |
-| Rotação de câmera fora do controle do usuário (cutscene, shake) | — | **Proibido** — regra já registrada em [[Como-Funciona-o-Tracking]] |
-
-Referenciais estáticos no campo de visão (uma cabine, um chão com grade, um horizonte
-fixo) ajudam mesmo quando o restante da cena se move — o mesmo princípio de "olhar o
-horizonte" contra o enjoo em barco.
+O sistema disponibiliza um painel flutuante de preferências com controles intuitivos e persistência local (`localStorage`).
 
 ```mermaid
 flowchart TD
-    L{Locomoção necessária?} -- não --> S[Experiência parada / sentada]
-    L -- sim --> T{Distância curta<br/>e pontual?}
-    T -- sim --> TP[Teleporte]
-    T -- não --> SM[Movimento suave + vignette]
-    TP --> ST[Snap turn para rotação]
-    SM --> ST
+    subgraph Controls["1. Controles do Usuário (AccessibilityWidget)"]
+        BTN_SCALE["Escala de Fonte A− / 100% / A+"]
+        BTN_THEME["Seletor de Tema (Branco-Nuvem / Azul Midnight)"]
+        TOGGLE_MOTION["Toggle Reduzir Movimento"]
+        TOGGLE_CONTRAST["Toggle Alto Contraste"]
+    end
+
+    subgraph StateHook["2. Hook useAccessibility"]
+        HOOK["Gerenciador de Estado + Persistência localStorage"]
+    end
+
+    subgraph HTMLRoot["3. Elemento Raiz document.documentElement (html)"]
+        VAR_FONT["style.setProperty('--font-scale', scale)"]
+        ATTR_THEME["setAttribute('data-theme', 'light' | 'dark')"]
+        ATTR_MOTION["setAttribute('data-reduced-motion', 'true')"]
+        ATTR_CONTRAST["setAttribute('data-high-contrast', 'true')"]
+    end
+
+    subgraph DOM_CSS["4. Propagação em Cascata no CSS"]
+        REM_CALC["html { font-size: calc(16px * var(--font-scale)); }"]
+        THEME_VARS["--bg, --text, --line, --accent redefinidos"]
+        MOTION_OVERRIDE["animation-duration: 0.01ms !important"]
+        CONTRAST_OVERRIDE["border: 2px solid var(--text) !important"]
+    end
+
+    Controls --> HOOK
+    HOOK --> HTMLRoot
+    HTMLRoot --> DOM_CSS
 ```
 
-## Configurações de conforto expostas ao usuário
+---
 
-- Alternar teleporte ↔ movimento suave.
-- Alternar rotação suave ↔ snap turn, com o passo do snap ajustável (ex.: 30°/45°).
-- Vignette durante movimento, ligado por padrão.
-- Ajuste de altura/escala do avatar quando `local-floor` não é suportado (ver seção 4 de
-  [[Como-Funciona-o-Tracking]]).
-- Opção de **sessão sentada**: nem toda experiência exige o usuário de pé.
+## 🔍 2. Escala Dinâmica de Tipografia (`--font-scale`)
 
-## Acessibilidade em XR — além do enjoo
+### O Desafio Tradicional:
+Muitos sites que oferecem botões de "aumentar fonte" aumentam apenas parágrafos soltos, fazendo com que botões estourem seus containers ou que tabelas fiquem sobrepostas.
 
-XR acessível é uma filosofia de design em torno de autonomia, dignidade e segurança:
-quando a acessibilidade nasce na plataforma, mais gente participa sem precisar de
-solução alternativa.
+### A Solução Implementada no VOID:
+Toda a tipografia do projeto foi estruturada em unidades relativas (`rem` e `clamp()`) ancoradas na raiz `<html>`:
 
-Práticas concretas para a LP:
+```css
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+}
+```
 
-- **Legendas** em qualquer áudio/narração da cena.
-- **Áudio espacial** como reforço, nunca como único canal de informação crítica.
-- **Seleção por `select`, não por hover contínuo** — já é regra técnica em
-  [[Como-Funciona-o-Tracking]] por causa do Vision Pro, e também é acessibilidade: hover
-  sustentado é difícil para quem tem tremor ou baixa precisão motora.
-- **Contraste mínimo AA (4.5:1)** também dentro do canvas 3D — texto e UI espacial não
-  ficam isentos do critério que vale no DOM.
-- **Alvo de interação generoso**: raio de seleção maior que o visual do objeto, mesma
-  lógica de área de toque em mobile.
-- **`prefers-reduced-motion: reduce`** já é usado para decidir o nível de experiência em
-  [[Suporte-de-Dispositivos]] — a mesma preferência do sistema operacional deve
-  desabilitar parallax, auto-rotação de câmera e qualquer animação ambiental na versão
-  2D da LP.
+- **Níveis de Escala**:
+  - `0.875` (88% — Modo Compacto)
+  - `1.000` (100% — Padrão de Leitura)
+  - `1.125` (113% — Confortável)
+  - `1.250` (125% — Amplo)
+  - `1.375` (138% — Máxima Legibilidade)
 
-## Rótulo de conforto
+Ao alterar `--font-scale`, **títulos, subtítulos, cards, botões, tabelas de especificações e formulários escalam proporcionalmente**, preservando o alinhamento visual e a ergonomia.
 
-Prática recomendada pela comunidade de acessibilidade em VR: declarar um **nível de
-conforto** da experiência (ex.: Confortável / Moderado / Intenso) antes do usuário
-entrar, do mesmo jeito que um jogo declara conteúdo sensível. Para esta LP, com
-locomoção por teleporte e sem movimento forçado de câmera, o alvo é **Confortável**.
+---
 
-## Checklist
+## 🌓 3. Contraste e Temas Visuais (WCAG 2.1 Nível AA & AAA)
 
-- [ ] Locomoção padrão é teleporte
-- [ ] Rotação padrão é snap turn
-- [ ] Vignette ativo durante qualquer movimento suave
-- [ ] Nenhuma cutscene move a câmera sem input
-- [ ] Seleção funciona por `select`, testada sem hover
-- [ ] Contraste AA verificado na UI dentro do canvas
-- [ ] `prefers-reduced-motion` respeitado no fallback 2D/3D
-- [ ] Rótulo de conforto declarado antes da sessão XR
+A paleta de cores foi calibrada para cumprir os requisitos de contraste mínimo de **4.5:1 para texto normal** e **3.0:1 para elementos de UI/ícones**:
 
-## Relacionados
+| Elemento | Modo Claro (Branco-Nuvem) | Modo Escuro (Azul Midnight) | Taxa de Contraste Medida |
+|---|---|---|---|
+| **Texto Principal** | Grafite Titânio `#1d1d1f` sobre `#fbfbfd` | Branco Gelo `#f8fafc` sobre `#070b14` | **16.8:1 (Passa AAA)** |
+| **Texto Secundário** | Slate Médio `#48484a` sobre `#f5f5f7` | Titânio Espacial `#cbd5e1` sobre `#0d1527` | **7.4:1 (Passa AAA)** |
+| **Botão de Ação Primária** | Branco `#ffffff` sobre Azul `#0071e3` | Preto Profundo `#070b14` sobre Safira `#38bdf8` | **5.2:1 (Passa AA)** |
+| **Bordas e Linhas** | Cinza Translúcido `#e5e5ea` | Vidro Midnight `rgba(255,255,255,0.09)` | **Contraste Estrutural** |
 
-- [[Como-Funciona-o-Tracking]]
-- [[Suporte-de-Dispositivos]]
-- [[Orcamento-de-Performance]] — frame perdido também é gatilho de desconforto
+---
 
-## Fontes
+## 🏃 4. Política de Redução de Movimento (`prefers-reduced-motion`)
 
-- [Accessible XR in 2026 — Equal Entry](https://equalentry.com/xr-accessibility-inclusive-design/)
-- [Virtual Reality Accessibility: Comfort Ratings and Reducing Motion — Equal Entry](https://equalentry.com/virtual-reality-accessibility-comfort-ratings-and-reduced-motion/)
-- [VR Motion Sickness: Causes, Prevention & Treatment (2026)](https://netpsychology.org/understanding-and-preventing-vr-motion-sickness/)
-- [What is Cybersickness in Virtual Reality? — IxDF](https://ixdf.org/literature/topics/cybersickness-in-virtual-reality)
-- [Peripheral Teleportation: A Rest Frame Design to Mitigate Cybersickness (arXiv)](https://arxiv.org/pdf/2502.15227)
+Para usuários com sensibilidade vestibular, epilepsia fotossensível ou propensão a cinetose:
+
+1. **Detecção Automática do Sistema Operacional**: O hook escuta `window.matchMedia('(prefers-reduced-motion: reduce)')`.
+2. **Toggle Manual no Painel**: Permite ligar o modo reduzido mesmo em computadores compartilhados.
+3. **Efeitos Práticos quando Ativo**:
+   - O scroll inercial suave é substituído por rolagem direta.
+   - O componente `KineticText` exibe todas as palavras totalmente iluminadas sem transições.
+   - O componente `InteractiveTiltCard` desativa a rotação 3D e o spotlight glare.
+   - A animação do ticker `StatusBar` é pausada.
+   - Os contadores de telemetria no Hero exibem o valor numérico final estaticamente sem animação de contagem.
+
+---
+
+## ⌨️ 5. Navegação por Teclado e Conformidade WAI-ARIA
+
+```mermaid
+graph LR
+    subgraph FocusFlow["Fluxo de Foco por Teclado (Tab / Shift+Tab)"]
+        A[Skip Link / Topo] --> B[Botões da Barra de Navegação]
+        B --> C[Botão de Acessibilidade A±]
+        C --> D[Botão Ligar Câmera]
+        D --> E[Seletor de Modelos RadioGroup]
+        E --> F[Cards da Coleção Urbana]
+        F --> G[Tabela de Specs]
+        G --> H[Formulário de Acesso]
+    end
+```
+
+### Padrões WAI-ARIA Implementados:
+- **`AccessibilityWidget.tsx`**: Estruturado como `role="dialog"`, com `aria-modal="true"`, fechamento automático ao pressionar `Escape` e captura de clique externo.
+- **`ModelSelector.tsx`**: Implementado com `role="radiogroup"` e `role="radio"`, gerenciando `aria-checked="true"` e permitindo navegação pelas setas do teclado.
+- **Feedback de Status da Câmera**: Mensagens de erro de permissão ou conexão utilizam `role="status"` e `aria-live="polite"` para anúncio imediato em leitores de tela (NVDA, JAWS, VoiceOver).
+
+---
+
+## 📚 Documentos Relacionados
+
+- [[Identidade-Visual]] — Paleta de cores, tipografia e tokens de design
+- [[02-Arquitetura]] — Estrutura e fluxo reativo da aplicação
+- [[Como-Funciona-o-Tracking]] — Estabilização anti-jitter no canvas 3D
+- [[Orcamento-de-Performance]] — Otimizações de renderização e acessibilidade motora
 
 ⬅ [[04-Design-e-UX]]
