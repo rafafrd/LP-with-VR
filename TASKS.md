@@ -10,7 +10,7 @@
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
 | 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo (1ª tentativa falhou, ver nota) | — |
-| 11  | Óculos 3D ambiente flutuando na LP + seção de campanha com fotos de `public/imgs/` | antigravity | todo | — |
+| 11  | Óculos 3D ambiente flutuando na LP + seção de campanha com fotos de `public/imgs/` | antigravity | todo (1ª tentativa falhou, ver nota) | — |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -759,6 +759,22 @@ mexer em `useFaceLandmarker.ts`/`useFaceTracking.ts`/câmera.
 página inteira, conferir que os óculos flutuantes acompanham o scroll sem jitter/soluço,
 que a seção de fotos carrega e é responsiva em mobile, console sem erros); confirmar que
 `prefers-reduced-motion` para o movimento ambiente de verdade (emular via DevTools).
+
+> ⚠️ **1ª tentativa de dispatch falhou (2026-08-17, ~09:10-09:15)**: `agy` saiu com
+> `"timeout waiting for response"` depois de ~300s, **nenhuma mudança gerada** no
+> worktree (`../void-task-11` ficou vazio, removido, mesmo destino da 1ª tentativa da
+> Task 10). `"num_turns":1` no JSON de saída — o agente aparentemente ficou preso num
+> único turno gigante (17k tokens só de "thinking") sem nunca chegar a escrever um
+> arquivo, e o timeout externo derrubou tudo antes de qualquer coisa ser persistida em
+> disco (diferente das Tasks 7-9, onde o timeout aconteceu *depois* de já ter código
+> real escrito no worktree, salvável). ~494k tokens consumidos sem produzir diff. **2ª
+> falha total consecutiva** (a 1ª foi a desta mesma sessão, Task 10) — mesmo padrão
+> (`num_turns:1`, zero arquivos, timeout/erro por volta dos ~300s), mas com mensagens de
+> erro diferentes (`"cannot kill task"` na Task 10 vs. `"timeout waiting for response"`
+> aqui), o que sugere flakiness geral de infraestrutura do `agy` nesta sessão, não
+> necessariamente um problema do meu prompt. Retry pendente — considerar quebrar em
+> prompts menores (separar "óculos ambiente" de "seção de fotos" em 2 dispatches) antes
+> de tentar de novo, para reduzir o trabalho perdido por tentativa.
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
