@@ -7,7 +7,7 @@ import { useCallback, useSyncExternalStore } from "react";
  * docs/vault/05-VR-e-3D/Pipeline-de-Assets-3D.md em `public/models/`.
  * Escala métrica (Three.js / WebXR): largura real de ~14cm.
  */
-export type GlassesModelId = "acid" | "violet" | "magenta";
+export type GlassesModelId = "acid" | "violet" | "magenta" | "chrome";
 
 export type GlassesModelInfo = {
   /** Identificador único do modelo. */
@@ -79,6 +79,21 @@ export const AVAILABLE_MODELS: readonly GlassesModelInfo[] = [
       weight: "21.5 g",
       material: "Compósito Magnésio",
       optics: "Foto-reativo UV400",
+    },
+  },
+  {
+    id: "chrome",
+    label: "Y2K Chrome Wave",
+    tag: "Cromado Y2K",
+    description:
+      "Silhueta wraparound assimétrica em acabamento cromado espelhado, com bico varrendo pra cima — o revival Y2K mais ousado da coleção.",
+    path: "/models/glasses-chrome.glb",
+    color: "#d9dce3",
+    accentColor: "#f2f4f7",
+    specs: {
+      weight: "17.8 g",
+      material: "Alumínio Polido Cromado",
+      optics: "Lente Espelhada UV400",
     },
   },
 ] as const;

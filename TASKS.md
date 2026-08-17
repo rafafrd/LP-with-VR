@@ -889,3 +889,40 @@ física nesta máquina, extensão Claude-in-Chrome não conectou). `npm run type
 `build` ok. Rafael: ajuste `EYE_LEVEL_OFFSET_M`/`DEPTH_OFFSET_M` (ou as props
 `eyeLevelOffsetM`/`depthOffsetM`) olhando a câmera real — se o eixo Z estiver invertido,
 troque `0.014` por `-0.014` antes de ajustar a magnitude.
+
+## 4º modelo — "Y2K Chrome Wave" (2026-08-17)
+
+Rafael pediu um modelo novo inspirado em referência fotográfica (óculos wraparound
+cat-eye assimétrico, acabamento cromado espelhado, bico varrendo pra cima, encaixe em
+zigue-zague na ponte — estética Y2K revival). Feito diretamente por mim, mesmo padrão
+desta sessão (delegar via `dispatch.sh` estava lento demais pro Rafael).
+
+`scripts/generate-placeholder-glasses.mjs`: os 3 modelos existentes usam primitivas
+(torus/cylinder/box) — não davam conta dessa silhueta assimétrica de lente única com
+bico anguloso. Nova função `createChromeGlasses()` via `THREE.Shape`/`THREE.Path` +
+`ExtrudeGeometry`: contorno da lente desenhado como path (reaproveitado tanto pro vidro
+quanto como furo do aro, via `Shape.holes`), dobradiça, haste chunky e uma ponte central
+com borda em zigue-zague (o "encaixe" visível na foto de referência). 3 materiais
+(frame/lens/accent cromado). Registrado em `main()` — `npm run
+assets:generate-placeholder-glasses` agora gera os 4 modelos de uma vez.
+
+`useModelSelection.ts`: `GlassesModelId` ganhou `"chrome"`; novo modelo "Y2K Chrome
+Wave" (tag "Cromado Y2K", cor `#d9dce3`) na 4ª posição de `AVAILABLE_MODELS`. Nenhum
+outro arquivo tinha contagem hardcoded de modelos (`ModelSelector`/`Showcase` já
+mapeiam `AVAILABLE_MODELS` dinamicamente) — só essas duas edições bastaram.
+
+**Validação**: `npm run assets:generate-placeholder-glasses` rodou os 4 (incluindo o
+novo) pelo pipeline `optimize-glb.mjs` de ponta a ponta sem erro — `glasses-chrome.glb`
+passou no `gltf-validator`, 15.2 kB / 2.560 triângulos, bem dentro do orçamento (≤3MB).
+`npm run typecheck`/`build` ok. **Sem teste visual ao vivo** (Claude-in-Chrome não
+conectou) — a fidelidade da silhueta à foto de referência foi construída por coordenadas
+calculadas à mão, não verificada olhando renderizado; vale conferir com o seletor de
+modelos antes de considerar fechado.
+
+**Achado à parte, não mexido**: ao regenerar os GLBs encontrei outro lote de mudanças
+não commitadas na working tree — um "Laboratório de Visão Explodida 3D"
+(`src/components/ExplodedStudio.tsx` + `src/scene/objects/ExplodedGlassesModel.tsx`,
+~540 linhas de CSS novas em `site.css`, integrado em `Showcase.tsx`), aparentemente de
+outro processo/sessão rodando em paralelo neste mesmo checkout. Não commitei nem mexi
+nisso — só os 3 arquivos do modelo Chrome (`generate-placeholder-glasses.mjs`,
+`useModelSelection.ts`, `glasses-chrome.glb`) foram staged e commitados por mim.

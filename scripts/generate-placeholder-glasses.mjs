@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Gerador de modelos placeholder de óculos/headset em GLB — Task 7.
+ * Gerador de modelos placeholder de óculos/headset em GLB — Task 7 (+ modelo Chrome).
  *
- * Gera 3 variantes com geometrias primitivas distintas e cores da paleta VOID:
+ * Gera 4 variantes com geometrias distintas e cores da paleta VOID:
  *   1. glasses-acid.glb    — Armação redonda clássica neon acid (#cfff04)
  *   2. glasses-violet.glb  — Armação hexagonal cyber neon violet (#8b5cf6)
  *   3. glasses-magenta.glb — Visor panorâmico / headset neon magenta (#ff2e6a)
+ *   4. glasses-chrome.glb  — Wraparound cat-eye assimétrico Y2K, cromado (#d9dce3)
  *
  * Escala em METROS (largura ~14cm, compatível com WebXR e tracking facial da Task 8).
  * Após gerar o GLB bruto, roda automaticamente o pipeline scripts/optimize-glb.mjs (Task 3).
@@ -379,6 +380,156 @@ function createMagentaHeadset() {
 }
 
 /**
+ * Contorno (silhueta) da lente wraparound cat-eye do modelo "Chrome" — usado tanto
+ * pela lente de vidro quanto como o furo (hole) do aro/frame ao redor dela.
+ * `mirror` é 1 para o lado direito e -1 para o esquerdo (espelha só o X).
+ */
+function createShieldLensPath(mirror) {
+  const path = new THREE.Path();
+  path.moveTo(0.012 * mirror, -0.008);
+  // barriga do cat-eye (desce e volta antes da haste subir)
+  path.quadraticCurveTo(0.020 * mirror, -0.019, 0.030 * mirror, -0.015);
+  // sobe reto até o cotovelo externo
+  path.lineTo(0.053 * mirror, -0.005);
+  // bico angular — a ponta que varre pra cima, a assinatura visual do design Y2K
+  path.lineTo(0.067 * mirror, 0.021);
+  // desce a borda de cima a partir da ponta
+  path.lineTo(0.055 * mirror, 0.031);
+  // topo curvo de volta até a ponte
+  path.quadraticCurveTo(0.028 * mirror, 0.028, 0.013 * mirror, 0.021);
+  // fecha o contorno junto ao nariz
+  path.quadraticCurveTo(0.006 * mirror, 0.008, 0.012 * mirror, -0.008);
+  return path;
+}
+
+/**
+ * Cria o modelo "Chrome" (Wraparound Cat-Eye Assimétrico / Y2K Revival).
+ * Largura total: ~14.4cm (0.144m).
+ *
+ * Geometria via THREE.Shape + ExtrudeGeometry (não primitivas) — a silhueta
+ * assimétrica de lente única, com bico varrendo pra cima, não é possível com
+ * torus/cylinder como os outros 3 modelos.
+ */
+function createChromeGlasses() {
+  const group = new THREE.Group();
+  group.name = "Glasses_Chrome";
+
+  const frameMaterial = new THREE.MeshStandardMaterial({
+    name: "Material_Chrome_Frame",
+    color: 0xd9dce3,
+    roughness: 0.15,
+    metalness: 0.9,
+    side: THREE.DoubleSide,
+  });
+
+  const lensMaterial = new THREE.MeshStandardMaterial({
+    name: "Material_Chrome_Lens",
+    color: 0x0a0a0d,
+    roughness: 0.12,
+    metalness: 0.25,
+    transparent: true,
+    opacity: 0.88,
+    side: THREE.DoubleSide,
+  });
+
+  const accentMaterial = new THREE.MeshStandardMaterial({
+    name: "Material_Chrome_Accent",
+    color: 0xf2f4f7,
+    roughness: 0.08,
+    metalness: 0.95,
+    side: THREE.DoubleSide,
+  });
+
+  const lensExtrudeSettings = {
+    depth: 0.0015,
+    bevelEnabled: false,
+    curveSegments: 12,
+  };
+
+  const frameExtrudeSettings = {
+    depth: 0.006,
+    bevelEnabled: true,
+    bevelThickness: 0.0005,
+    bevelSize: 0.0005,
+    bevelSegments: 2,
+    curveSegments: 12,
+  };
+
+  for (const [side, mirror] of [["Left", -1], ["Right", 1]]) {
+    // Lente de vidro (preenchimento do contorno)
+    const lensShape = new THREE.Shape(createShieldLensPath(mirror).getPoints(24));
+    const lensGeo = new THREE.ExtrudeGeometry(lensShape, lensExtrudeSettings);
+    lensGeo.translate(0, 0, -lensExtrudeSettings.depth / 2);
+    const lens = new THREE.Mesh(lensGeo, lensMaterial);
+    lens.name = `Lens_${side}`;
+    group.add(lens);
+
+    // Aro/frame: mesma silhueta um pouco maior por fora, com a lente como furo
+    const frameOuter = new THREE.Shape();
+    frameOuter.moveTo(0.009 * mirror, -0.010);
+    frameOuter.quadraticCurveTo(0.018 * mirror, -0.023, 0.031 * mirror, -0.018);
+    frameOuter.lineTo(0.056 * mirror, -0.007);
+    frameOuter.lineTo(0.072 * mirror, 0.022);
+    frameOuter.lineTo(0.058 * mirror, 0.034);
+    frameOuter.quadraticCurveTo(0.029 * mirror, 0.031, 0.012 * mirror, 0.023);
+    frameOuter.quadraticCurveTo(0.004 * mirror, 0.009, 0.009 * mirror, -0.010);
+    frameOuter.holes.push(createShieldLensPath(mirror));
+
+    const frameGeo = new THREE.ExtrudeGeometry(frameOuter, frameExtrudeSettings);
+    frameGeo.translate(0, 0, -frameExtrudeSettings.depth / 2);
+    const frame = new THREE.Mesh(frameGeo, frameMaterial);
+    frame.name = `Shield_${side}`;
+    group.add(frame);
+
+    // Dobradiça (pequeno bloco cromado no cotovelo externo, onde a haste começa)
+    const hingeGeo = new THREE.BoxGeometry(0.006, 0.009, 0.008);
+    const hinge = new THREE.Mesh(hingeGeo, accentMaterial);
+    hinge.position.set(0.070 * mirror, 0.019, 0);
+    hinge.name = `Hinge_${side}`;
+    group.add(hinge);
+
+    // Haste chunky saindo da dobradiça, com ponteira levemente inclinada pro ouvido
+    const templeLength = 0.115;
+    const templeGeo = new THREE.BoxGeometry(0.005, 0.007, templeLength);
+    const temple = new THREE.Mesh(templeGeo, frameMaterial);
+    temple.position.set(0.072 * mirror, 0.015, -templeLength / 2);
+    temple.name = `Temple_${side}`;
+    group.add(temple);
+
+    const tipGeo = new THREE.BoxGeometry(0.005, 0.014, 0.016);
+    tipGeo.rotateX(-Math.PI / 6);
+    const tip = new THREE.Mesh(tipGeo, frameMaterial);
+    tip.position.set(0.072 * mirror, 0.006, -templeLength + 0.006);
+    tip.name = `Tip_${side}`;
+    group.add(tip);
+  }
+
+  // Ponte central: faixa horizontal com borda em zigue-zague — o encaixe
+  // "interlocking" entre as duas lentes visível na foto de referência.
+  const bridgeShape = new THREE.Shape();
+  const bw = 0.013;
+  const bh = 0.006;
+  bridgeShape.moveTo(-bw, -bh / 2);
+  bridgeShape.lineTo(-bw * 0.6, bh / 2);
+  bridgeShape.lineTo(-bw * 0.2, -bh * 0.1);
+  bridgeShape.lineTo(0, bh / 2);
+  bridgeShape.lineTo(bw * 0.2, -bh * 0.1);
+  bridgeShape.lineTo(bw * 0.6, bh / 2);
+  bridgeShape.lineTo(bw, -bh / 2);
+  bridgeShape.lineTo(-bw, -bh / 2);
+
+  const bridgeExtrudeSettings = { depth: 0.005, bevelEnabled: false, curveSegments: 1 };
+  const bridgeGeo = new THREE.ExtrudeGeometry(bridgeShape, bridgeExtrudeSettings);
+  bridgeGeo.translate(0, 0, -bridgeExtrudeSettings.depth / 2);
+  const bridge = new THREE.Mesh(bridgeGeo, accentMaterial);
+  bridge.position.set(0, -0.009, 0);
+  bridge.name = "Bridge_Zigzag";
+  group.add(bridge);
+
+  return group;
+}
+
+/**
  * Exporta uma THREE.Scene/THREE.Group para GLB bruto em buffer.
  */
 function exportToGlb(object3D) {
@@ -443,6 +594,7 @@ async function main() {
     { name: "glasses-acid", factory: createAcidGlasses },
     { name: "glasses-violet", factory: createVioletGlasses },
     { name: "glasses-magenta", factory: createMagentaHeadset },
+    { name: "glasses-chrome", factory: createChromeGlasses },
   ];
 
   for (const model of models) {
@@ -450,7 +602,7 @@ async function main() {
   }
 
   console.log("\n========================================");
-  console.log("[gerador] Todos os 3 modelos foram gerados e otimizados com sucesso!");
+  console.log(`[gerador] Todos os ${models.length} modelos foram gerados e otimizados com sucesso!`);
 }
 
 main().catch((err) => {
