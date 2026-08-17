@@ -866,3 +866,26 @@ visual ao vivo desta vez (extensão Claude-in-Chrome não conectou nesta sessão
 Rafael: ajuste `EYE_LEVEL_OFFSET_M` em `src/scene/objects/AnchoredGlasses.tsx` (ou passe
 `eyeLevelOffsetM` como prop) olhando a câmera real até os óculos alinharem nos olhos —
 o hot reload do Vite deixa isso rápido de iterar.
+
+### 2ª rodada de calibração — eixo Z entrando no rosto (2026-08-17)
+
+Rafael testou de novo com câmera real: `EYE_LEVEL_OFFSET_M` (2.2cm) ainda não era
+altura suficiente, e o eixo Z estava descalibrado — a armação "entrava" no rosto
+(posicionada fundo demais) e aparecia pequena demais na tela (os dois sintomas têm a
+mesma causa: aproximar da câmera em perspectiva também aumenta o tamanho aparente).
+
+**Ajustes em `AnchoredGlasses.tsx`** (mesmo padrão de constante + prop, sem delegar):
+- `EYE_LEVEL_OFFSET_M`: 0.022 → **0.03** (3cm).
+- Novo `DEPTH_OFFSET_M` = **0.014** (1.4cm), aplicado no eixo Z local (mesmo tratamento
+  do Y — rotacionado pelo quaternion da pose, não um deslocamento fixo no mundo).
+  Direção assumida (+Z local = pra fora do rosto/em direção à câmera, convenção do
+  nariz protraindo em +Z no modelo canônico do MediaPipe) **não confirmada
+  empiricamente** — documentado no código que se o efeito for o oposto (óculos
+  afundando ainda mais), é só inverter o sinal.
+
+**Pendência real**: os dois valores (3cm e 1.4cm) são estimativas por anatomia, não
+calibradas numericamente contra rosto real — mesma limitação de sempre (sem câmera
+física nesta máquina, extensão Claude-in-Chrome não conectou). `npm run typecheck`/
+`build` ok. Rafael: ajuste `EYE_LEVEL_OFFSET_M`/`DEPTH_OFFSET_M` (ou as props
+`eyeLevelOffsetM`/`depthOffsetM`) olhando a câmera real — se o eixo Z estiver invertido,
+troque `0.014` por `-0.014` antes de ajustar a magnitude.

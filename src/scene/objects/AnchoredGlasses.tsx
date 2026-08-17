@@ -21,11 +21,30 @@ import GlassesModel from "./GlassesModel";
  * Aplicado em espaço local (rotacionado pelo quaternion da pose) para acompanhar a
  * inclinação da cabeça, não o eixo Y do mundo.
  *
- * Valor inicial estimado por anatomia (distância nariz→olhos ~2-2.5cm); esta máquina
- * não tem câmera física para calibrar contra um rosto real (ver TASKS.md, pendência
- * da Task 8). Ajuste este valor — ou a prop `eyeLevelOffsetM` — olhando a câmera real.
+ * Calibrado uma 2ª vez em 2026-08-17 com câmera real (subiu de 0.022 para 0.03 —
+ * Rafael reportou que ainda precisava de mais altura). Ajuste este valor — ou a prop
+ * `eyeLevelOffsetM` — olhando a câmera real.
  */
-const EYE_LEVEL_OFFSET_M = 0.022;
+const EYE_LEVEL_OFFSET_M = 0.03;
+
+/**
+ * Deslocamento de profundidade (metros, espaço local do rosto, eixo Z) entre a
+ * origem da `facialTransformationMatrix` e o plano onde a armação deveria se apoiar.
+ *
+ * Com câmera real, Rafael reportou o eixo Z descalibrado: os óculos "entravam" no
+ * rosto (posicionados fundo demais) e apareciam pequenos demais na tela — os dois
+ * sintomas têm a mesma causa, já que aproximar um objeto da câmera em perspectiva
+ * também aumenta seu tamanho aparente. Valor positivo desloca a armação na direção
+ * +Z local (para fora do rosto, em direção à câmera/quem vê — convenção assumida do
+ * modelo canônico do MediaPipe, onde o nariz protrai em +Z; **se testar e o efeito
+ * for o oposto — óculos afundando ainda mais —, inverta o sinal deste valor**).
+ * Aplicado em espaço local (rotacionado pelo quaternion da pose), como o offset de Y.
+ *
+ * Valor inicial (1.4cm) é estimativa por anatomia (armação repousa um pouco à frente
+ * do plano dos olhos), não calibrado numericamente contra rosto real. Ajuste este
+ * valor — ou a prop `depthOffsetM` — olhando a câmera real.
+ */
+const DEPTH_OFFSET_M = 0.014;
 
 // Objeto reutilizado fora do useFrame para ZERO alocação em runtime (Convencoes-de-Codigo.md - Regra 1)
 const _offsetLocal = new THREE.Vector3();
@@ -65,10 +84,17 @@ export type AnchoredGlassesProps = {
 
   /**
    * Deslocamento vertical (metros, espaço local do rosto) da origem da matriz facial
-   * até a altura dos olhos. Ver `EYE_LEVEL_OFFSET_M`. Padrão: 0.022 (2.2cm).
+   * até a altura dos olhos. Ver `EYE_LEVEL_OFFSET_M`. Padrão: 0.03 (3cm).
    * Exposto como prop para calibração rápida com câmera real, sem editar código.
    */
   eyeLevelOffsetM?: number;
+
+  /**
+   * Deslocamento de profundidade (metros, espaço local do rosto, eixo Z) — positivo
+   * traz a armação pra mais perto da câmera. Ver `DEPTH_OFFSET_M`. Padrão: 0.014 (1.4cm).
+   * Exposto como prop para calibração rápida com câmera real, sem editar código.
+   */
+  depthOffsetM?: number;
 };
 
 /**
@@ -79,7 +105,8 @@ export type AnchoredGlassesProps = {
  * - Decompõe a matriz 4x4 do MediaPipe (coluna-principal) em posição + quaternion.
  * - Aplica suavização temporal por frame (lerp na posição e slerp no quaternion).
  * - Corrige a altura da âncora do nível do nariz (origem crua da matriz) para o nível
- *   dos olhos via `eyeLevelOffsetM` (ver `EYE_LEVEL_OFFSET_M`).
+ *   dos olhos via `eyeLevelOffsetM` (ver `EYE_LEVEL_OFFSET_M`) e a profundidade via
+ *   `depthOffsetM` (ver `DEPTH_OFFSET_M`), pra armação não "entrar" no rosto.
  * - Zero alocação de memória no render loop `useFrame` (Convencoes-de-Codigo.md — Regra 1).
  * - Máquina de estados para tolerância a oclusão/perda de frames: hold por 400ms e fade-out suave.
  * - Quando em modo preview (câmera desligada), mantém o modelo centralizado em [0, 0, 0] para inspeção via OrbitControls.
@@ -91,6 +118,7 @@ export default function AnchoredGlasses({
   matrix: overrideMatrix,
   forceTrackingMode = false,
   eyeLevelOffsetM = EYE_LEVEL_OFFSET_M,
+  depthOffsetM = DEPTH_OFFSET_M,
 }: AnchoredGlassesProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { status } = useFaceTracking();
@@ -126,9 +154,10 @@ export default function AnchoredGlasses({
         group.visible = true;
         group.quaternion.copy(pose.quaternion);
         // Sobe da origem da matriz do MediaPipe (perto do nariz) até a altura dos
-        // olhos, rotacionado pela pose atual para acompanhar a inclinação da cabeça
-        // (não é um deslocamento no eixo Y do mundo — ver EYE_LEVEL_OFFSET_M acima).
-        _offsetLocal.set(0, eyeLevelOffsetM, 0).applyQuaternion(group.quaternion);
+        // olhos (Y) e traz a armação pra mais perto da câmera (Z), rotacionado pela
+        // pose atual para acompanhar a inclinação da cabeça (não é um deslocamento
+        // nos eixos do mundo — ver EYE_LEVEL_OFFSET_M/DEPTH_OFFSET_M acima).
+        _offsetLocal.set(0, eyeLevelOffsetM, depthOffsetM).applyQuaternion(group.quaternion);
         group.position.copy(pose.position).add(_offsetLocal);
         // Aplica a escala resultante da atenuação/fade
         group.scale.copy(pose.scale);
