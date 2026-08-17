@@ -256,6 +256,21 @@ button {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* --- Óculos 3D Ambiente (Three.js/R3F flutuando pela LP inteira) ---------- */
+/* Um único Canvas fixo cobrindo o viewport, atrás do conteúdo (z-index acima do
+   .ambient-backdrop = 0, abaixo das seções = 10) e sem capturar clique/scroll. */
+.ambient-canvas-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ambient-canvas-wrapper canvas {
+  display: block;
+}
+
 /* --- Status Bar / Telemetria Urbana -------------------------------------- */
 .statusbar {
   position: relative;
@@ -2546,6 +2561,247 @@ button {
   color: var(--text-faint);
 }
 
+/* --- Campanha / Lookbook Editorial (fotos reais) -------------------------- */
+.campaign {
+  position: relative;
+  z-index: 10;
+  padding: 6rem 1.25rem;
+}
+
+.campaign__container {
+  max-width: var(--container);
+  margin: 0 auto;
+}
+
+.campaign__header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 3.75rem;
+}
+
+.campaign__title {
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+.campaign__sub {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+}
+
+/* Grade editorial estilo bento/revista: 4 colunas, itens "tall" ocupam 2 linhas,
+   "wide" ocupa 2 colunas — mesmo princípio de .engineering__bento-grid. */
+.campaign__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(180px, auto);
+  grid-auto-flow: dense;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.campaign__item--tall {
+  grid-row: span 2;
+}
+
+.campaign__item--wide {
+  grid-column: span 2;
+}
+
+.campaign__item--standard {
+  grid-column: span 1;
+}
+
+.campaign__card-tilt {
+  height: 100%;
+}
+
+.campaign__card {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign__card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--line-strong);
+}
+
+.campaign__media-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-subtle);
+}
+
+.campaign__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.5s var(--ease);
+}
+
+.campaign__card:hover .campaign__image {
+  transform: scale(1.04);
+}
+
+.campaign__overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.15) 45%, transparent 70%);
+  pointer-events: none;
+}
+
+.campaign__top-badges {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 2;
+}
+
+.campaign__tag,
+.campaign__model-badge {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.campaign__tag {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
+}
+
+.campaign__model-badge {
+  background: rgba(0, 113, 227, 0.85);
+  color: #ffffff;
+}
+
+.campaign__info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 18px;
+  color: #ffffff;
+}
+
+.campaign__category {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 4px;
+}
+
+.campaign__photo-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.campaign__spec-pill {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 14px;
+}
+
+.campaign__try-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.campaign__try-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.campaign__btn-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.campaign__banner-wrap {
+  width: 100%;
+}
+
+.campaign__banner {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.campaign__banner-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.campaign__banner-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.campaign__banner-desc {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  max-width: 600px;
+}
+
+.campaign__banner-action {
+  flex-shrink: 0;
+}
+
 /* --- Manifesto / Filosofia Editorial ------------------------------------- */
 .philosophy {
   position: relative;
@@ -2987,6 +3243,20 @@ button {
   .bento-card--large {
     grid-column: span 1;
   }
+  .campaign__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .campaign__item--wide {
+    grid-column: span 2;
+  }
+  .campaign__item--standard {
+    grid-column: span 1;
+  }
+  .campaign__banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 28px;
+  }
   .philosophy__pillars {
     grid-template-columns: 1fr;
   }
@@ -3025,6 +3295,15 @@ button {
     flex-direction: column;
     text-align: center;
     padding: 28px;
+  }
+  .campaign__grid {
+    grid-template-columns: 1fr;
+  }
+  .campaign__item--tall,
+  .campaign__item--wide,
+  .campaign__item--standard {
+    grid-column: span 1;
+    grid-row: span 1;
   }
   .cta__card {
     padding: 36px 20px;

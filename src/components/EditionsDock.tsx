@@ -13,6 +13,7 @@ const CHAPTERS: Chapter[] = [
   { id: "como-funciona", number: "03", name: "Storyboard" },
   { id: "engenharia", number: "04", name: "Engenharia WASM" },
   { id: "specs", number: "05", name: "Especificações" },
+  { id: "campanha", number: "06", name: "Lookbook" },
 ];
 
 export default function EditionsDock() {

@@ -15,6 +15,7 @@ const SECTION_IDS = [
   "como-funciona",
   "engenharia",
   "specs",
+  "campanha",
   "filosofia",
   "acesso",
 ];

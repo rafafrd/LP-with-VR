@@ -73,6 +73,13 @@ export default function Nav() {
             >
               Especificações
             </a>
+            <a
+              href="#campanha"
+              className={`nav__link ${activeSection === "campanha" ? "is-active" : ""}`}
+              onClick={() => setMobileOpen(false)}
+            >
+              Lookbook
+            </a>
           </nav>
 
           <div className="nav__actions">

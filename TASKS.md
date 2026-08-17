@@ -10,8 +10,8 @@
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
 | 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo (1ª tentativa falhou, ver nota) | — |
-| 11  | Óculos 3D ambiente flutuando pela LP | antigravity | todo (1ª tentativa falhou, escopo reduzido, ver nota) | — |
-| 12  | Seção de campanha com fotos de `public/imgs/` | antigravity | todo | — |
+| 11  | Óculos 3D ambiente flutuando pela LP | eu mesmo (ver nota) | done (⚠️ ver ressalvas) | direto em `dev` |
+| 12  | Seção de campanha com fotos de `public/imgs/` | eu mesmo (ver nota) | done (⚠️ ver ressalvas) | direto em `dev` |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -752,6 +752,51 @@ verdade (emular via DevTools).
 > menores antes do retry — feito: task reduzida ao escopo acima, seção de fotos virou
 > Task 12.
 
+**Status: done, feito por mim diretamente** — Rafael pediu pra eu assumir em vez de
+delegar de novo ("está muito demorado delegar pra outros agentes"). Já tinha disparado os
+retries das Tasks 11/12 em paralelo quando o pedido chegou; matei os processos (`agy` +
+`dispatch.sh`) e removi os worktrees `../void-task-11`/`../void-task-12`.
+
+**Achado importante ao investigar**: a 1ª tentativa falhada (bundlada, ~09:10-09:15) tinha
+na verdade **escrito arquivos reais** antes de travar — só que direto no checkout
+principal (`C:\...\LP-with-VR`) em vez do worktree isolado, o mesmo bug histórico da
+Task 1/7 (`agy` ignorando o `cd "$WT"` do `dispatch.sh`). Encontrei `AmbientCanvas.tsx`,
+`AmbientGlasses.tsx` e `Campanha.tsx` como arquivos não rastreados no meu próprio checkout.
+Revisei tudo criticamente em vez de descartar ou aceitar sem checar: a estrutura, convenções
+(zero alocação no `useFrame`, dispose de recursos, reaproveito de `createGltfLoader`/
+`usePerfProfile`/`usePrefersReducedMotion`) e os dados (dimensões reais das 6 fotos batendo
+exatamente com o que o componente declarava) estavam corretos e bem pesquisados.
+
+**Bug real encontrado e corrigido por mim**: a matemática do parallax de scroll em
+`AmbientGlasses.tsx` estava errada — `basePosition.y` variava de +1.8 a -14.6 entre as 8
+instâncias (tentando simular "cada óculos pertence a uma seção da página"), mas
+`parallaxScale` só ia até 12, nunca o suficiente pra trazer as últimas instâncias de volta
+pro centro da tela quando o scroll chegava no `scrollAnchor` delas — ficavam presas fora do
+frustum da câmera pra sempre. Reescrevi com posições base todas dentro do campo de visão e
+uma fórmula de wrap (`x - Math.round(x)`) que garante, por construção, que o deslocamento
+nunca passa de `±0.5 * parallaxScale` — cada instância entra em quadro perto do seu
+`scrollAnchor` e sai suavemente, sem nenhuma ficar invisível para sempre. Também corrigi um
+vazamento de recurso menor (Convencoes-de-Codigo.md Regra 2): os materiais originais dos 3
+GLBs-template carregados como base pra clonagem nunca eram liberados após
+`createRecoloredModel` trocar o material de cada clone — adicionei o `dispose()` deles
+(mantendo a geometria intacta, que continua compartilhada por referência com os clones).
+
+Depois da revisão: escrevi toda a integração que faltava (os arquivos vazados não tinham
+sido conectados a nada) — `.ambient-canvas-wrapper` e ~230 linhas de CSS `.campaign__*` em
+`site.css` (a partir dos tokens de design já existentes, sem inventar cor/espaçamento
+novo), `AmbientCanvas` importado via `React.lazy`+`Suspense` em `App.tsx` (mesmo padrão do
+`TryOnStage`), `Campanha` posicionada entre `TechSpecs` e `Filosofia`, `"campanha"`
+adicionado a `SECTION_IDS` (`useScrollAnimations.ts`), link "Lookbook" no `Nav.tsx` e
+capítulo 06 no `EditionsDock.tsx`. Renomeei as 6 fotos de hash sem sentido pra nomes
+descritivos (`noir-silhouette.jpg` etc.) e atualizei as referências.
+
+Validação: `npm run typecheck`/`build` limpos, chunk `AmbientCanvas` separado e pequeno
+(6.4kB/2.4kB gzip, lazy). **Sem teste visual ao vivo** — a extensão Claude-in-Chrome não
+conectou nesta sessão (tentei de novo antes de começar). Pendência real: calibrar o
+movimento/parallax dos óculos ambiente e o layout da campanha olhando o navegador de
+verdade — a lógica está corrigida e testada por leitura de código com atenção, mas não
+substitui ver rodando.
+
 ### Task 12 — Seção de campanha com fotos de `public/imgs/`
 
 **Extraída da Task 11 em 2026-08-17** (ver nota acima) — mesmo pedido original do
@@ -785,6 +830,18 @@ Não mexer no Canvas do Hero/TryOnStage nem em câmera/tracking.
 
 **Validação pedida**: `npm run typecheck`/`build`; teste visual ao vivo (a seção carrega
 corretamente, é responsiva em mobile, console sem erros).
+
+**Status: done, feito por mim diretamente** — mesma sessão de trabalho da Task 11 (ver
+nota lá de por que virou trabalho direto em vez de dispatch), o componente
+`Campanha.tsx` também apareceu como arquivo vazado da 1ª tentativa falhada. Revisei o
+conteúdo (dimensões declaradas por foto batem exatamente com o arquivo real, mapeamento
+de `modelId` pro botão "Experimentar no Rosto" correto), escrevi o CSS que faltava
+(`.campaign__*`, ~230 linhas, grid bento com `grid-auto-flow: dense` + responsividade em
+992px/768px), conectei em `App.tsx` entre `TechSpecs` e `Filosofia`, e renomeei as 6 fotos
+de hash pra nomes descritivos (`noir-silhouette.jpg`, `lilas-translucent.jpg`,
+`emerald-knit.jpg`, `amber-tortoise.jpg`, `vitreous-studio.jpg`, `petroleum-slate.jpg`),
+atualizando as referências em `Campanha.tsx`. `npm run typecheck`/`build` limpos. Mesma
+pendência da Task 11: sem teste visual ao vivo (Claude-in-Chrome não conectou).
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
