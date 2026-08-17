@@ -3,13 +3,12 @@ import { useModelSelection } from "../hooks/useModelSelection";
 import type { GlassesModelId } from "../hooks/useModelSelection";
 
 /**
- * Seletor de modelos de óculos/headset para a prova virtual (DOM, não 3D) — Task 7.
+ * Seletor de modelos de óculos/headset para a prova virtual — Design Apple Urban.
  *
  * Padrão WAI-ARIA Radio Group acessível:
- * - `role="radiogroup"` com navegação por setas (Left/Up e Right/Down).
+ * - `role="radiogroup"` com navegação por setas.
  * - Cada opção possui `role="radio"` e `aria-checked="true|false"`.
- * - Contraste mínimo AA em todos os estados.
- * - Foco visível via `:focus-visible`.
+ * - Contraste AA, foco visível, acabamento em vidro translúcido e titânio.
  */
 export default function ModelSelector() {
   const { models, selectedId, selectModel, selectNext, selectPrevious } =
@@ -35,7 +34,10 @@ export default function ModelSelector() {
       aria-label="Seleção de modelo para prova virtual"
     >
       <div className="model-selector__header">
-        <span className="model-selector__title">Modelos VOID</span>
+        <div className="model-selector__title-wrap">
+          <span className="model-selector__pill">COLEÇÃO URBANA</span>
+          <span className="model-selector__title">Modelos VOID</span>
+        </div>
         <span className="model-selector__counter">
           {models.findIndex((m) => m.id === selectedId) + 1} de {models.length}
         </span>
@@ -67,7 +69,7 @@ export default function ModelSelector() {
                 style={{
                   backgroundColor: model.color,
                   boxShadow: isSelected
-                    ? `0 0 12px ${model.color}`
+                    ? `0 0 0 2px #ffffff, 0 0 16px ${model.accentColor}66`
                     : "none",
                 }}
                 aria-hidden="true"
@@ -83,6 +85,7 @@ export default function ModelSelector() {
               </span>
               {isSelected && (
                 <span className="model-selector__badge" aria-hidden="true">
+                  <span className="model-selector__badge-dot" />
                   Ativo
                 </span>
               )}

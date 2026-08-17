@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * Modelos de óculos/headset disponíveis no VOID (Task 7).
+ * Modelos de óculos/headset disponíveis no VOID Spatial Optics (Coleção Urbana).
  *
  * Cada modelo representa um asset GLB otimizado pelo pipeline de
  * docs/vault/05-VR-e-3D/Pipeline-de-Assets-3D.md em `public/models/`.
@@ -14,9 +14,9 @@ export type GlassesModelInfo = {
   id: GlassesModelId;
   /** Nome legível para exibição na UI. */
   label: string;
-  /** Variante ou estilo (ex.: "Clássico", "Cyber", "Visor"). */
+  /** Variante ou acabamento (ex.: "Titânio Natural", "Cobalto Safira", "Visor Aero"). */
   tag: string;
-  /** Descrição curta do design. */
+  /** Descrição editorial do design urbano. */
   description: string;
   /** Caminho do arquivo GLB otimizado na pasta public/. */
   path: string;
@@ -24,6 +24,12 @@ export type GlassesModelInfo = {
   color: string;
   /** Cor secundária / brilho (hex). */
   accentColor: string;
+  /** Especificações rápidas para a galeria */
+  specs: {
+    weight: string;
+    material: string;
+    optics: string;
+  };
 };
 
 /**
@@ -32,42 +38,54 @@ export type GlassesModelInfo = {
 export const AVAILABLE_MODELS: readonly GlassesModelInfo[] = [
   {
     id: "acid",
-    label: "Neon Classic",
-    tag: "Clássico",
-    description: "Armação redonda clássica com acabamento neon acid",
+    label: "Titanium Minimal",
+    tag: "Titânio Natural",
+    description:
+      "Armação circular esculpida em liga de titânio aeroespacial. Leveza absoluta para o ritmo diário da cidade.",
     path: "/models/glasses-acid.glb",
-    color: "#cfff04",
-    accentColor: "#8fb300",
+    color: "#242528",
+    accentColor: "#0071e3",
+    specs: {
+      weight: "14.2 g",
+      material: "Titânio Grau 5",
+      optics: "Polarizado AR",
+    },
   },
   {
     id: "violet",
-    tag: "Cyber Hex",
-    label: "Cyber Edge",
-    description: "Armação angular hexagonal com barra dupla superior",
+    label: "Metropolis Hex",
+    tag: "Cobalto & Safira",
+    description:
+      "Design geométrico angular inspirado nos perfis arquitetônicos de grandes metrópoles contemporâneas.",
     path: "/models/glasses-violet.glb",
-    color: "#8b5cf6",
-    accentColor: "#d8b4fe",
+    color: "#3b4261",
+    accentColor: "#6366f1",
+    specs: {
+      weight: "16.8 g",
+      material: "Polímero Aero + Titânio",
+      optics: "Filtro Blue Light +",
+    },
   },
   {
     id: "magenta",
-    tag: "Headset",
-    label: "Cyberdeck Visor",
-    description: "Visor panorâmico contínuo com módulos laterais tech",
+    label: "Spatial Studio Visor",
+    tag: "Visor Aero",
+    description:
+      "Escudo contínuo panorâmico com curvatura óptica precisa e acoplamento biomecânico de perfil ultra-slim.",
     path: "/models/glasses-magenta.glb",
-    color: "#ff2e6a",
-    accentColor: "#ff7597",
+    color: "#0f4c81",
+    accentColor: "#0071e3",
+    specs: {
+      weight: "21.5 g",
+      material: "Compósito Magnésio",
+      optics: "Foto-reativo UV400",
+    },
   },
 ] as const;
 
 /**
  * Store reativo externo compartilhado (padrão useSyncExternalStore).
- *
- * Decisão de arquitetura:
- * No React Three Fiber (R3F), a árvore do `<Canvas>` roda em um reconciler
- * separado da árvore DOM normal. Usar `useSyncExternalStore` garante que o
- * estado da seleção seja compartilhado instantaneamente entre o componente
- * DOM (`<ModelSelector />`) e o componente 3D (`<GlassesModel />` dentro do
- * Canvas), sem necessidade de prop drilling ou bridges manuais de Context.
+ * Sincroniza instantaneamente o estado entre a árvore DOM e o Canvas R3F.
  */
 type Listener = () => void;
 
@@ -112,9 +130,7 @@ export type UseModelSelectionResult = {
 };
 
 /**
- * Hook para gerenciar e consumir o modelo de óculos/headset selecionado (Task 7 / Task 8).
- *
- * Pode ser chamado tanto em componentes DOM quanto em componentes 3D do R3F.
+ * Hook para gerenciar e consumir o modelo de óculos/headset selecionado.
  */
 export function useModelSelection(): UseModelSelectionResult {
   const selectedId = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

@@ -1,72 +1,110 @@
-import { lazy, Suspense, useCallback, useRef } from "react";
+import { lazy, Suspense } from "react";
 import Button from "../components/Button";
-import GlitchText from "../components/GlitchText";
+import Reveal from "../components/Reveal";
+import { useCounterAnimation } from "../hooks/useCounterAnimation";
 import StaticFallback from "../scene/StaticFallback";
 
-// Code-splitting com React.lazy para reduzir o bundle inicial (Orcamento-de-Performance.md)
 const TryOnStage = lazy(() => import("../components/TryOnStage"));
 
 export default function Hero() {
-  const glowRef = useRef<HTMLDivElement>(null);
-
-  const onPointerMove = useCallback((event: React.PointerEvent<HTMLElement>) => {
-    const glow = glowRef.current;
-    if (
-      !glow ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      !window.matchMedia("(hover: hover)").matches
-    ) {
-      return;
-    }
-    const rect = glow.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    glow.style.background =
-      `radial-gradient(560px circle at ${x}% ${y}%, rgba(207, 255, 4, 0.14), transparent 60%),` +
-      "radial-gradient(500px circle at 80% 70%, rgba(207, 255, 4, 0.06), transparent 60%)," +
-      "radial-gradient(900px circle at 15% 85%, rgba(255, 46, 106, 0.08), transparent 60%)";
-  }, []);
+  const pointsCounter = useCounterAnimation(468, 1400);
+  const latencyCounter = useCounterAnimation(12, 1200, 0, "~", "ms");
+  const fpsCounter = useCounterAnimation(60, 1000, 0, "", " FPS");
 
   return (
-    <section className="hero" id="hero" onPointerMove={onPointerMove}>
-      <div className="hero__glow" ref={glowRef} aria-hidden="true" />
+    <section className="hero" id="hero">
+      <div className="hero__container">
+        {/* Cabeçalho Editorial Estilo Apple Keynote / Editions */}
+        <div className="hero__header">
+          <Reveal variant="fade-up" delayMs={50}>
+            <div className="hero__badge-wrap">
+              <span className="hero__badge">
+                <span className="hero__badge-pulse" aria-hidden="true" />
+                EDITIONS WINTER 2026 · TRY-ON SPATIAL
+              </span>
+            </div>
+          </Reveal>
 
-      {/* Stage unificado de Try-On (vídeo + canvas 3D) carregado sob demanda com fallback estático */}
-      <Suspense
-        fallback={
-          <div className="hero__canvas hero__canvas--loading" aria-hidden="true">
-            <StaticFallback />
-          </div>
-        }
-      >
-        <TryOnStage />
-      </Suspense>
+          <Reveal variant="fade-up" delayMs={150}>
+            <h1 className="hero__title">
+              A precisão da metrópole.
+              <br />
+              <span className="hero__title-gradient">Direto no seu olhar.</span>
+            </h1>
+          </Reveal>
 
-      <div className="hero__inner enter">
-        <p className="eyebrow">TRY-ON FACIAL · 100% NAVEGADOR · SEM INSTALAR</p>
-        <h1 className="hero__title" data-text="A REALIDADE TEM UM UPGRADE.">
-          A REALIDADE TEM
-          <br />
-          <GlitchText text="UM UPGRADE." />
-        </h1>
-        <p className="hero__sub">
-          VOID é a experiência de prova virtual em 3D direto no seu navegador.
-          Sem headset, sem baixar aplicativo — ligue a câmera e experimente em tempo real.
-        </p>
-        <div className="hero__cta">
-          <Button href="#acesso" variant="primary">
-            Entrar no VOID <span aria-hidden="true">→</span>
-          </Button>
-          <Button href="#como-funciona" variant="ghost">
-            Ver como funciona
-          </Button>
+          <Reveal variant="fade-up" delayMs={250}>
+            <p className="hero__subtitle">
+              Experimente a nova geração de óculos e visores VOID em 3D de alta
+              fidelidade, ancorados em tempo real no seu rosto. Sem baixar apps, sem cadastro
+              e com processamento 100% local no seu navegador.
+            </p>
+          </Reveal>
+
+          {/* Telemetria com Contagem Cinética estilo Shopify Editions */}
+          <Reveal variant="fade-up" delayMs={350}>
+            <div className="hero__telemetry-bar">
+              <div className="hero__telemetry-item">
+                <span className="hero__telemetry-value" ref={pointsCounter.ref}>
+                  {pointsCounter.displayValue}
+                </span>
+                <span className="hero__telemetry-label">Pontos de Tracking</span>
+              </div>
+              <div className="hero__telemetry-divider" aria-hidden="true" />
+              <div className="hero__telemetry-item">
+                <span className="hero__telemetry-value" ref={latencyCounter.ref}>
+                  {latencyCounter.displayValue}
+                </span>
+                <span className="hero__telemetry-label">Latência Estimada</span>
+              </div>
+              <div className="hero__telemetry-divider" aria-hidden="true" />
+              <div className="hero__telemetry-item">
+                <span className="hero__telemetry-value" ref={fpsCounter.ref}>
+                  {fpsCounter.displayValue}
+                </span>
+                <span className="hero__telemetry-label">WebGL + WASM</span>
+              </div>
+              <div className="hero__telemetry-divider" aria-hidden="true" />
+              <div className="hero__telemetry-item">
+                <span className="hero__telemetry-value">0 bytes</span>
+                <span className="hero__telemetry-label">Vídeo em Nuvem</span>
+              </div>
+            </div>
+          </Reveal>
         </div>
-      </div>
 
-      <a href="#filosofia" className="scroll-cue" aria-label="Rolar para a próxima seção">
-        <span>role</span>
-        <span className="scroll-cue__line" aria-hidden="true" />
-      </a>
+        {/* Stage de Prova Virtual com Moldura de Hardware de Precisão */}
+        <Reveal variant="scale-up" delayMs={400} className="hero__stage-wrapper">
+          <Suspense
+            fallback={
+              <div className="hero__canvas hero__canvas--loading" aria-hidden="true">
+                <StaticFallback />
+              </div>
+            }
+          >
+            <TryOnStage />
+          </Suspense>
+        </Reveal>
+
+        {/* Ações de Apoio e Scroll Cue */}
+        <Reveal variant="fade-up" delayMs={500} className="hero__footer">
+          <div className="hero__cta-group">
+            <Button href="#showcase" variant="secondary">
+              Explorar Coleção Urbana <span aria-hidden="true">↓</span>
+            </Button>
+            <Button href="#como-funciona" variant="ghost">
+              Ver Como Funciona
+            </Button>
+          </div>
+
+          <a href="#showcase" className="scroll-cue" aria-label="Rolar para a seção da coleção">
+            <span className="scroll-cue__text">Explore a Coleção</span>
+            <span className="scroll-cue__indicator" aria-hidden="true">
+              <span className="scroll-cue__dot" />
+            </span>
+          </a>
+        </Reveal>
+      </div>
     </section>
   );
 }

@@ -1,16 +1,6 @@
 import { useCamera } from "../hooks/useCamera";
 import type { CameraError, CameraErrorReason, CameraStatus } from "../hooks/useCamera";
 
-/**
- * Gate de permissão de câmera (DOM, não 3D) — Task 5 (Atualizado na Task 9).
- *
- * Responsabilidades:
- * - Apresentar aviso claro de contexto e privacidade antes de solicitar a câmera (LGPD).
- * - Fornecer botão de ação explícito "Ligar câmera" para disparar `getUserMedia`.
- * - Exibir estados de carregamento ("Solicitando...") e erros específicos com orientações claras.
- * - Permitir retry inteligente apenas para falhas recuperáveis (não insiste em `denied` definitivo).
- */
-
 const RETRYABLE_REASONS: ReadonlySet<CameraErrorReason> = new Set([
   "not-found",
   "in-use",
@@ -21,11 +11,11 @@ const ERROR_COPY: Record<CameraErrorReason, string> = {
   "insecure-context":
     "Este site não está em uma conexão segura (HTTPS). Navegadores só liberam a câmera em contexto seguro — abra o site via https:// (ou localhost) e recarregue a página.",
   denied:
-    "Você negou o acesso à câmera. Depois de negado, o navegador não mostra o pedido de novo — libere a câmera nas configurações do site (cadeado na barra de endereço) e recarregue a página.",
+    "Você negou o acesso à câmera. Depois de negado, o navegador não mostra o pedido de novo — libere a câmera nas configurações do site (ícone de cadeado na barra de endereço) e recarregue.",
   "not-found":
-    "Não encontramos uma câmera neste dispositivo. Conecte uma webcam e tente de novo.",
+    "Nenhuma câmera detectada neste dispositivo. Conecte uma webcam e tente novamente.",
   "in-use":
-    "A câmera está em uso por outro aplicativo ou aba do navegador. Feche o outro programa e tente de novo.",
+    "A câmera está em uso por outro aplicativo ou aba. Feche o outro programa e tente novamente.",
   other: "",
 };
 
@@ -42,7 +32,6 @@ export default function CameraPermissionGate({
   onRequestCamera: propRequestCamera,
   className = "",
 }: CameraPermissionGateProps) {
-  // Permite uso autônomo ou orquestrado via props pelo TryOnStage
   const fallbackCamera = useCamera();
   const status = propStatus ?? fallbackCamera.status;
   const error = propError !== undefined ? propError : fallbackCamera.error;
@@ -56,9 +45,16 @@ export default function CameraPermissionGate({
       role="region"
       aria-label="Permissão de câmera para prova virtual"
     >
+      <div className="camera-gate__icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="M9 12l2 2 4-4" stroke="#0071e3" strokeWidth="2" />
+        </svg>
+      </div>
+
       <div className="camera-gate__header">
-        <span className="camera-gate__tag">TRY-ON 3D</span>
-        <h2 className="camera-gate__title">Prova Virtual</h2>
+        <span className="camera-gate__tag">PROCESSAMENTO 100% LOCAL</span>
+        <h2 className="camera-gate__title">Prova Virtual em Tempo Real</h2>
       </div>
 
       <div
@@ -75,8 +71,8 @@ export default function CameraPermissionGate({
 
         {status === "idle" && (
           <p className="camera-gate__text">
-            Experimente os modelos de óculos VOID no seu rosto em tempo real.
-            O processamento facial ocorre 100% no seu navegador — nenhum vídeo ou dado biométrico sai do dispositivo.
+            Veja a coleção VOID projetada no seu rosto em 3D com precisão milimétrica.
+            Todo o tracking neural é processado no seu processador — nenhum pixel ou dado biométrico sai do seu aparelho.
           </p>
         )}
 
@@ -96,12 +92,19 @@ export default function CameraPermissionGate({
             className="camera-gate__btn"
             onClick={() => void requestCamera()}
           >
-            Ligar câmera
+            <span className="camera-gate__btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M9 4.5 7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5L15 4.5h-6Z" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+            </span>
+            Ligar câmera & Experimentar
           </button>
         )}
 
         {isRequesting && (
-          <button type="button" className="camera-gate__btn" disabled>
+          <button type="button" className="camera-gate__btn camera-gate__btn--loading" disabled>
+            <span className="camera-gate__spinner-sm" aria-hidden="true" />
             Aguardando permissão…
           </button>
         )}
@@ -114,9 +117,18 @@ export default function CameraPermissionGate({
               className="camera-gate__btn"
               onClick={() => void requestCamera()}
             >
-              Tentar de novo
+              Tentar novamente
             </button>
           )}
+      </div>
+
+      <div className="camera-gate__footer">
+        <span className="camera-gate__badge-safe">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-.5V4.5A3.5 3.5 0 0 0 8 1Zm2 5H6V4.5a2 2 0 1 1 4 0V6Z" />
+          </svg>
+          Privacidade Absoluta (LGPD) · Sem Armazenamento
+        </span>
       </div>
     </div>
   );

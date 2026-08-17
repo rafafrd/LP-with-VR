@@ -94,6 +94,13 @@ flowchart TD
 - [x] Escrever o [[Escopo]] (reescrito para a feature de try-on facial em 2026-08-14)
 - [x] Registrar o pivô de produto em [[ADR-0003-Feature-Try-On-Facial]]
 - [ ] Definir os eventos de [[Plano-de-Eventos]] para a feature de try-on
-- [ ] Preencher [[Identidade-Visual]] — ainda em branco
+- [x] Preencher [[Identidade-Visual]] — feito em 2026-08-17, a partir do redesign
+      completo da landing page (paleta Branco-Nuvem/Azul Midnight estilo Apple)
 - [ ] Validar orçamento de performance/jitter de tracking em dispositivo real e atualizar [[Orcamento-de-Performance]]
-- [ ] Revisitar a cópia de marketing (Hero/Filosofia/Benefícios/CTA) já construída — ainda fala do pitch de VR antigo, não da feature de try-on
+- [x] Revisitar a cópia de marketing (Hero/Filosofia/Benefícios/CTA) — reescrita no mesmo
+      redesign de 2026-08-17 (posicionamento "Coleção Urbana" / VOID Spatial Optics)
+- [ ] Recolorir os 3 GLBs reais em `public/models/` pra paleta nova (ver ressalva em
+      [[Identidade-Visual]] — "Inconsistência em aberto") — swatch 2D e material 3D real
+      estão dessincronizados desde o redesign de 2026-08-17
+- [ ] Remover `src/components/Portal.tsx` (órfão, sem import desde o redesign de
+      2026-08-17 — achado registrado em [[Identidade-Visual]])
