@@ -10,6 +10,7 @@
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
 | 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo (1ª tentativa falhou, ver nota) | — |
+| 11  | Óculos 3D ambiente flutuando na LP + seção de campanha com fotos de `public/imgs/` | antigravity | todo | — |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -688,6 +689,76 @@ pular esse teste antes de marcar `done`.
 > prompt da Task 10** de recolorir os óculos pra `#cfff04`/`#8b5cf6`/`#ff2e6a` — releia o
 > prompt e ajuste a paleta-alvo antes de rodar de novo. Ver seção de documentação do redesign
 > mais abaixo/no vault.
+
+### Task 11 — Óculos 3D ambiente flutuando + seção de campanha com fotos
+
+Dois pedidos do Rafael no mesmo tema (usar mais o potencial do Three.js na LP em si, não
+só no stage de try-on, e integrar fotos reais que ele adicionou em `public/imgs/`) —
+antigravity, mesmo motivo da Task 10 (julgamento visual + browser-in-the-loop).
+
+**Parte 1 — óculos 3D flutuando pela LP.** Hoje o Three.js só aparece dentro do Canvas do
+Hero/TryOnStage. Adicionar uma camada 3D ambiente e decorativa (óculos flutuando de forma
+fluida) que aparece ao longo da página, não só no Hero — reforça o "use mais o potencial
+do Three.js" pedido. Diretrizes técnicas (para não estourar o orçamento nem duplicar
+contexto WebGL):
+- **Um Canvas só**, não um por seção — múltiplos contextos WebGL são caros e alguns
+  browsers limitam quantos podem existir simultaneamente. `position: fixed`/`sticky`
+  cobrindo a área rolável relevante, `pointer-events: none`, atrás do conteúdo (mesma
+  camada de `Backdrop.tsx` ou logo acima dela).
+- Reaproveitar os GLBs já otimizados de `public/models/` (Task 7/3) via
+  `createGltfLoader` (`src/lib/gltfLoader.ts`) — não recriar geometria do zero. Como as
+  cores desses GLBs ainda são a paleta antiga (acid/violet/magenta — ver ressalva em
+  [[Identidade-Visual]] "Inconsistência em aberto"), aplicar um *override* de cor no
+  material em runtime (`material.color.set(...)`) para a paleta nova
+  (`#242528`/`#0071e3`, `#3b4261`/`#6366f1`, `#0f4c81`/`#0071e3`) ou um tom
+  vidro/cromado translúcido combinando com o tema Branco-Nuvem/Azul Midnight — não editar
+  os arquivos GLB.
+- Movimento "fluido": drift suave + rotação lenta por `useFrame` (seno/cosseno, sem
+  alocação nova a cada frame — Convencoes-de-Codigo.md Regra 1) e parallax discreto
+  ligado ao scroll (reaproveitar `useScrollAnimations`/`scrollY`, não duplicar listener).
+- Respeitar `prefers-reduced-motion` (parar/congelar o movimento, mesmo padrão de
+  `usePrefersReducedMotion` já usado em `Scene.tsx`/`InteractiveTiltCard`) e o perfil de
+  performance (`usePerfProfile`): reduzir contagem de instâncias ou desligar de vez no
+  tier `estatico`/baixo.
+- Code-split via `React.lazy`+`Suspense` (mesmo padrão do `TryOnStage`) para não travar o
+  primeiro paint — RF-01/RNF-03 continuam valendo pra LP inteira, não só pro Hero.
+- Orçamento (Orcamento-de-Performance.md): poucas instâncias (6-10), GLBs já otimizados
+  (6-10kB cada), fica bem dentro de 50k triângulos/~100 draw calls mesmo somando com o
+  resto da cena do Hero.
+
+**Parte 2 — seção de campanha com as fotos.** `public/imgs/` tem 6 fotos (adicionadas
+pelo Rafael, já web-otimizadas, ~40-68kB cada) de modelos usando óculos escuros, estilo
+editorial de moda, fundo branco/estúdio, ângulo de cima — combina com a estética
+Apple/Editions do redesign atual. Já analisei cada uma, use essa leitura em vez de
+reanalisar:
+
+| Arquivo | Descrição |
+| --- | --- |
+| `5eecacbcb0779c8e0c553443921ba51f.jpg` | Mulher, look preto total, óculos retangulares pretos, pose dramática (braço sobre a cabeça) |
+| `7a27f77774830f610cecff0d0e41f5ae.jpg` | Mulher, look lilás, óculos retangulares com lente roxa translúcida, olhando por cima da armação |
+| `a24593da5acc11c9e7fa87846eb1a4f8.jpg` | Homem, cabelo cacheado, suéter verde felpudo, óculos retangulares verdes, puxando a armação |
+| `a7a68c6e5ac15ca1e54c14f83a78da82.jpg` | Mulher, franja, óculos quadrados grandes tartaruga/âmbar, efeito grande-angular, calça azul |
+| `c867a34936d17d3ea79e5aa077a0d335.jpg` | Mulher, luva transparente perto do rosto, óculos quadrados pretos, efeito grande-angular |
+| `f3c4c4791eddb23c3263bd6ae93b551a.jpg` | Homem, cabelo cacheado curto, jaqueta azul-petróleo, óculos retangulares pretos, camiseta branca |
+
+Criar uma seção nova de galeria/campanha (grade editorial estilo bento, mesmo padrão já
+usado em `Beneficios.tsx`/`engineering__bento-grid`, ou variação assimétrica tipo revista)
+entre `Showcase` e `ComoFunciona`, ou entre `TechSpecs` e `Filosofia` — julgamento do
+antigravity sobre o melhor encaixe narrativo. Usar `Reveal`/`InteractiveTiltCard` já
+existentes para consistência. `<img>` com `loading="lazy"`, `alt` descritivo (usar as
+descrições acima como base), `width`/`height` ou `aspect-ratio` explícitos pra evitar
+layout shift. Pode renomear os arquivos de `public/imgs/` (hash sem sentido) para nomes
+descritivos via `git mv`, se ajudar a manutenção — não obrigatório.
+
+**Fronteiras**: não mexer no Canvas do Hero/TryOnStage (`Scene.tsx`, `AnchoredGlasses.tsx`,
+`TryOnStage.tsx`) além de, se necessário, extrair um material/helper compartilhado — a
+ancoragem facial e o try-on continuam sendo uma cena R3F separada da camada ambiente. Não
+mexer em `useFaceLandmarker.ts`/`useFaceTracking.ts`/câmera.
+
+**Validação pedida**: `npm run typecheck`/`build`; teste visual ao vivo (scroll pela
+página inteira, conferir que os óculos flutuantes acompanham o scroll sem jitter/soluço,
+que a seção de fotos carrega e é responsiva em mobile, console sem erros); confirmar que
+`prefers-reduced-motion` para o movimento ambiente de verdade (emular via DevTools).
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
