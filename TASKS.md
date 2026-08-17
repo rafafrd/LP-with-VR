@@ -9,6 +9,7 @@
 | 7   | Seletor de modelos de óculos/headset (placeholder) | antigravity | done (⚠️ ver ressalva de processo) | feat/task-7 (merged em dev) |
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
+| 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo | — |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -623,6 +624,57 @@ na raiz do repo — mesmo rigor do checklist da leva anterior (Tasks 1-3).
 Nenhuma dessas pendências bloqueou a fila — todas foram contornadas com validação
 alternativa (testes sintéticos, smoke tests, leitura de código) e documentadas aqui
 pra você decidir o que precisa de atenção antes do merge `dev → main`.
+
+### Task 10 — Modelos GLB reais + oclusão da haste pela cabeça
+
+Dois problemas reportados pelo Rafael depois de testar com câmera real, delegados juntos
+por serem os dois sobre "realismo visual do try-on" — antigravity (browser-in-the-loop
+pra julgamento visual dos dois: qualidade do modelo e comportamento da oclusão).
+
+**Problema 1 — baixa definição.** Os 3 placeholders atuais
+(`scripts/generate-placeholder-glasses.mjs`) são primitivas simples (toros/cilindros/
+caixas), poucos triângulos, "sem definição". Substituir por modelos reais de óculos
+baixados da internet, **open-source ou free-to-use**: CC0 fortemente preferido (Sketchfab
+com filtro CC0, Poly Pizza / "Poly by Google", tag CC0 do Meshy); CC-BY aceitável só com
+arquivo de atribuição (`public/models/ATTRIBUTION.md`: fonte, autor, licença por modelo).
+Evitar licenças ambíguas (TurboSquid/CGTrader "free" sem termo de redistribuição claro).
+Manter os 3 slots selecionáveis (`useModelSelection.ts`/`ModelSelector.tsx`, Task 7) —
+pode recolorir os materiais pra paleta neon já usada no código (acid `#cfff04`, violet
+`#8b5cf6`, magenta `#ff2e6a`) mesmo com geometria de fonte genérica, pra manter a
+identidade visual. Rodar cada GLB pelo pipeline existente (`scripts/optimize-glb.mjs`),
+respeitando o orçamento de ≤3MB/modelo (Task 7) e a convenção métrica (~14cm de largura,
+origem na altura das lentes — não muda o offset de ancoragem já corrigido). Orçamento de
+triângulos com folga enorme (Orcamento-de-Performance.md: 50k alvo/150k teto pra cena
+inteira) — não é preciso exagerar no polycount.
+
+**Problema 2 — haste atravessando a cabeça ao virar o rosto.** `TryOnStage.tsx` (Task 9)
+sobrepõe um `<Canvas>` R3F transparente sobre o `<video>` da câmera — não há profundidade
+3D real do vídeo, então a haste sempre desenha por cima, mesmo quando deveria ficar atrás
+da cabeça. Corrigir com um **oclusor invisível**: mesh proxy (elipsoide/caixa arredondada,
+~15-16cm largura × ~22cm altura × ~20cm profundidade) ancorado na MESMA pose já suavizada
+usada pelo `AnchoredGlasses` (reaproveitar `facePoseSmoother`/`useFaceTracking`, não criar
+um segundo caminho de suavização — evita dessincronia entre oclusor e óculos), renderizado
+com `colorWrite: false` + `depthWrite: true` (permanece invisível, mas escreve no depth
+buffer) e ordem de render antes do modelo de óculos — assim os fragmentos da haste que
+ficam atrás do oclusor (do ponto de vista da câmera) falham no teste de profundidade e não
+desenham, deixando o vídeo aparecer por trás, lendo como "a cabeça tapa a haste". Expor o
+offset/escala do oclusor como constantes ajustáveis (mesmo padrão do `EYE_LEVEL_OFFSET_M`)
+— calibração fina contra uma cabeça real fica pro Rafael (sem câmera física nesta máquina,
+mesma limitação de sempre). Zero alocação no `useFrame`, dispose de geometria/material ao
+desmontar (Convencoes-de-Codigo.md Regras 1-2).
+
+**Fronteiras**: não mexer em `useFaceLandmarker.ts`/`useFaceTracking.ts` — o oclusor é um
+volume proxy simples ancorado na mesma matriz já usada, não precisa (e não deve) triangular
+os 478 landmarks individuais (Stack-Tecnologica.md §0 já recomenda explicitamente usar a
+matriz pronta, não pontos individuais — motivo de jitter). Não mexer em câmera/permissão
+(Task 5) nem no pipeline MediaPipe (Task 6) além do necessário.
+
+**Validação pedida**: `npm run typecheck`/`build`; a oclusão é testável sem câmera física
+— injetar/rotacionar uma matriz facial sintética (mesma técnica das Tasks 8/9, via prop
+`matrix`/`forceTrackingMode` de `AnchoredGlasses` ou escrevendo direto no buffer global de
+`useFaceTracking.ts`) simulando a cabeça virando ~45-90° e confirmar visualmente (screenshot)
+que a haste do lado oposto vai sumindo em vez de ficar flutuando por cima do fundo — não
+pular esse teste antes de marcar `done`.
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
