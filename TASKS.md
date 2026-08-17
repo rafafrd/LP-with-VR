@@ -10,7 +10,8 @@
 | 8   | Ancoragem do GLB nos landmarks faciais | antigravity | done (⚠️ ver ressalvas) | feat/task-8 (merged em dev) |
 | 9   | Overlay vídeo + canvas 3D compostos | antigravity | done (⚠️ ver ressalvas) | feat/task-9 (merged em dev) |
 | 10  | Modelos GLB reais (mais poligonos) + oclusão da haste pela cabeça | antigravity | todo (1ª tentativa falhou, ver nota) | — |
-| 11  | Óculos 3D ambiente flutuando na LP + seção de campanha com fotos de `public/imgs/` | antigravity | todo (1ª tentativa falhou, ver nota) | — |
+| 11  | Óculos 3D ambiente flutuando pela LP | antigravity | todo (1ª tentativa falhou, escopo reduzido, ver nota) | — |
+| 12  | Seção de campanha com fotos de `public/imgs/` | antigravity | todo | — |
 
 > Tasks 4-9: pivô de escopo registrado em
 > [[ADR-0003-Feature-Try-On-Facial|docs/vault/07-Decisoes/ADR-0003-Feature-Try-On-Facial.md]]
@@ -690,17 +691,16 @@ pular esse teste antes de marcar `done`.
 > prompt e ajuste a paleta-alvo antes de rodar de novo. Ver seção de documentação do redesign
 > mais abaixo/no vault.
 
-### Task 11 — Óculos 3D ambiente flutuando + seção de campanha com fotos
+### Task 11 — Óculos 3D ambiente flutuando pela LP
 
-Dois pedidos do Rafael no mesmo tema (usar mais o potencial do Three.js na LP em si, não
-só no stage de try-on, e integrar fotos reais que ele adicionou em `public/imgs/`) —
-antigravity, mesmo motivo da Task 10 (julgamento visual + browser-in-the-loop).
+**Escopo reduzido em 2026-08-17** depois da 1ª tentativa (ver ressalva abaixo) — a task
+original bundlava isso + a seção de fotos; Rafael pediu pra quebrar em dispatches menores
+pra reduzir o trabalho perdido por tentativa. A seção de fotos virou a Task 12 (abaixo).
 
-**Parte 1 — óculos 3D flutuando pela LP.** Hoje o Three.js só aparece dentro do Canvas do
-Hero/TryOnStage. Adicionar uma camada 3D ambiente e decorativa (óculos flutuando de forma
-fluida) que aparece ao longo da página, não só no Hero — reforça o "use mais o potencial
-do Three.js" pedido. Diretrizes técnicas (para não estourar o orçamento nem duplicar
-contexto WebGL):
+Hoje o Three.js só aparece dentro do Canvas do Hero/TryOnStage. Adicionar uma camada 3D
+ambiente e decorativa (óculos flutuando de forma fluida) que aparece ao longo da página
+inteira, não só no Hero — antigravity (julgamento visual + browser-in-the-loop).
+Diretrizes técnicas (para não estourar o orçamento nem duplicar contexto WebGL):
 - **Um Canvas só**, não um por seção — múltiplos contextos WebGL são caros e alguns
   browsers limitam quantos podem existir simultaneamente. `position: fixed`/`sticky`
   cobrindo a área rolável relevante, `pointer-events: none`, atrás do conteúdo (mesma
@@ -726,11 +726,41 @@ contexto WebGL):
   (6-10kB cada), fica bem dentro de 50k triângulos/~100 draw calls mesmo somando com o
   resto da cena do Hero.
 
-**Parte 2 — seção de campanha com as fotos.** `public/imgs/` tem 6 fotos (adicionadas
-pelo Rafael, já web-otimizadas, ~40-68kB cada) de modelos usando óculos escuros, estilo
-editorial de moda, fundo branco/estúdio, ângulo de cima — combina com a estética
-Apple/Editions do redesign atual. Já analisei cada uma, use essa leitura em vez de
-reanalisar:
+**Fronteiras**: não mexer no Canvas do Hero/TryOnStage (`Scene.tsx`, `AnchoredGlasses.tsx`,
+`TryOnStage.tsx`) além de, se necessário, extrair um material/helper compartilhado — a
+ancoragem facial e o try-on continuam sendo uma cena R3F separada da camada ambiente. Não
+mexer em `useFaceLandmarker.ts`/`useFaceTracking.ts`/câmera.
+
+**Validação pedida**: `npm run typecheck`/`build`; teste visual ao vivo (scroll pela
+página inteira, conferir que os óculos flutuantes acompanham o scroll sem jitter/soluço,
+console sem erros); confirmar que `prefers-reduced-motion` para o movimento ambiente de
+verdade (emular via DevTools).
+
+> ⚠️ **1ª tentativa de dispatch falhou (2026-08-17, ~09:10-09:15), quando a task ainda
+> bundlava óculos ambiente + seção de fotos**: `agy` saiu com `"timeout waiting for
+> response"` depois de ~300s, **nenhuma mudança gerada** no worktree (`../void-task-11`
+> ficou vazio, removido, mesmo destino da 1ª tentativa da Task 10). `"num_turns":1` no
+> JSON de saída — o agente aparentemente ficou preso num único turno gigante (17k tokens
+> só de "thinking") sem nunca chegar a escrever um arquivo, e o timeout externo derrubou
+> tudo antes de qualquer coisa ser persistida em disco (diferente das Tasks 7-9, onde o
+> timeout aconteceu *depois* de já ter código real escrito no worktree, salvável). ~494k
+> tokens consumidos sem produzir diff. **2ª falha total consecutiva** (a 1ª foi a desta
+> mesma sessão, Task 10) — mesmo padrão (`num_turns:1`, zero arquivos, timeout/erro por
+> volta dos ~300s), mas com mensagens de erro diferentes (`"cannot kill task"` na Task 10
+> vs. `"timeout waiting for response"` aqui), sugerindo flakiness geral de infraestrutura
+> do `agy` nesta sessão. Rafael pediu (via pergunta direta) pra quebrar em dispatches
+> menores antes do retry — feito: task reduzida ao escopo acima, seção de fotos virou
+> Task 12.
+
+### Task 12 — Seção de campanha com fotos de `public/imgs/`
+
+**Extraída da Task 11 em 2026-08-17** (ver nota acima) — mesmo pedido original do
+Rafael, só separada em dispatch próprio.
+
+`public/imgs/` tem 6 fotos (adicionadas pelo Rafael, já web-otimizadas, ~40-68kB cada) de
+modelos usando óculos escuros, estilo editorial de moda, fundo branco/estúdio, ângulo de
+cima — combina com a estética Apple/Editions do redesign atual. Já analisei cada uma, use
+essa leitura em vez de reanalisar (antigravity, julgamento visual de encaixe/layout):
 
 | Arquivo | Descrição |
 | --- | --- |
@@ -750,31 +780,11 @@ descrições acima como base), `width`/`height` ou `aspect-ratio` explícitos pr
 layout shift. Pode renomear os arquivos de `public/imgs/` (hash sem sentido) para nomes
 descritivos via `git mv`, se ajudar a manutenção — não obrigatório.
 
-**Fronteiras**: não mexer no Canvas do Hero/TryOnStage (`Scene.tsx`, `AnchoredGlasses.tsx`,
-`TryOnStage.tsx`) além de, se necessário, extrair um material/helper compartilhado — a
-ancoragem facial e o try-on continuam sendo uma cena R3F separada da camada ambiente. Não
-mexer em `useFaceLandmarker.ts`/`useFaceTracking.ts`/câmera.
+**Fronteiras**: puramente DOM/CSS — não toca em nada de `src/scene/` nem Three.js/R3F.
+Não mexer no Canvas do Hero/TryOnStage nem em câmera/tracking.
 
-**Validação pedida**: `npm run typecheck`/`build`; teste visual ao vivo (scroll pela
-página inteira, conferir que os óculos flutuantes acompanham o scroll sem jitter/soluço,
-que a seção de fotos carrega e é responsiva em mobile, console sem erros); confirmar que
-`prefers-reduced-motion` para o movimento ambiente de verdade (emular via DevTools).
-
-> ⚠️ **1ª tentativa de dispatch falhou (2026-08-17, ~09:10-09:15)**: `agy` saiu com
-> `"timeout waiting for response"` depois de ~300s, **nenhuma mudança gerada** no
-> worktree (`../void-task-11` ficou vazio, removido, mesmo destino da 1ª tentativa da
-> Task 10). `"num_turns":1` no JSON de saída — o agente aparentemente ficou preso num
-> único turno gigante (17k tokens só de "thinking") sem nunca chegar a escrever um
-> arquivo, e o timeout externo derrubou tudo antes de qualquer coisa ser persistida em
-> disco (diferente das Tasks 7-9, onde o timeout aconteceu *depois* de já ter código
-> real escrito no worktree, salvável). ~494k tokens consumidos sem produzir diff. **2ª
-> falha total consecutiva** (a 1ª foi a desta mesma sessão, Task 10) — mesmo padrão
-> (`num_turns:1`, zero arquivos, timeout/erro por volta dos ~300s), mas com mensagens de
-> erro diferentes (`"cannot kill task"` na Task 10 vs. `"timeout waiting for response"`
-> aqui), o que sugere flakiness geral de infraestrutura do `agy` nesta sessão, não
-> necessariamente um problema do meu prompt. Retry pendente — considerar quebrar em
-> prompts menores (separar "óculos ambiente" de "seção de fotos" em 2 dispatches) antes
-> de tentar de novo, para reduzir o trabalho perdido por tentativa.
+**Validação pedida**: `npm run typecheck`/`build`; teste visual ao vivo (a seção carrega
+corretamente, é responsiva em mobile, console sem erros).
 
 ## Correção pós-pivô — âncora Y caindo no nariz (2026-08-17)
 
