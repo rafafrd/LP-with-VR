@@ -50,6 +50,32 @@ export default function TryOnStage({ className = "" }: TryOnStageProps) {
 
   const isFaceDetected = face.detected || isTrackingDetected;
 
+  // "Ancoragem 3D sincronizada" é uma confirmação pontual, não um indicador permanente:
+  // mostra por ~1.8s ao sincronizar e depois some com fade-out, em vez de ficar plantada
+  // no meio da tela (o filho do meio de .try-on-stage__overlay, que usa
+  // justify-content: space-between) pelo tempo inteiro em que o rosto está detectado.
+  const [syncBadgeVisible, setSyncBadgeVisible] = useState(false);
+  const [syncBadgeFading, setSyncBadgeFading] = useState(false);
+
+  useEffect(() => {
+    if (!isFaceDetected) {
+      setSyncBadgeVisible(false);
+      setSyncBadgeFading(false);
+      return;
+    }
+
+    setSyncBadgeVisible(true);
+    setSyncBadgeFading(false);
+
+    const fadeTimer = window.setTimeout(() => setSyncBadgeFading(true), 1800);
+    const hideTimer = window.setTimeout(() => setSyncBadgeVisible(false), 1800 + 400);
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [isFaceDetected]);
+
   return (
     <div
       className={`try-on-stage ${isLive ? "try-on-stage--live" : "try-on-stage--idle"} ${className}`}
@@ -140,8 +166,12 @@ export default function TryOnStage({ className = "" }: TryOnStageProps) {
                 </div>
               )}
 
-              {face.status === "ready" && isFaceDetected && (
-                <div className="try-on-stage__feedback-pill try-on-stage__feedback-pill--active">
+              {face.status === "ready" && isFaceDetected && syncBadgeVisible && (
+                <div
+                  className={`try-on-stage__feedback-pill try-on-stage__feedback-pill--active ${
+                    syncBadgeFading ? "try-on-stage__feedback-pill--fade-out" : ""
+                  }`}
+                >
                   <span className="try-on-stage__dot-pulse" aria-hidden="true" />
                   <span>Ancoragem 3D sincronizada</span>
                 </div>
