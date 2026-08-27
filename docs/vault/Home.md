@@ -3,93 +3,89 @@ title: Home
 tags:
   - moc
   - indice
+  - arquitetura
+  - try-on
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-17
+status: estavel
 ---
 
-# 🏠 LP with VR — Documentação
+# 🏠 VOID Spatial Optics — Vault de Documentação Técnica
 
-Ponto de entrada do vault. Use este arquivo como mapa de conteúdo (MOC) para navegar
-por todas as áreas da documentação.
+Ponto de entrada central do vault. Use este arquivo como mapa de conteúdo (MOC) para navegar por todas as especificações de arquitetura, matemática 3D, design system, acessibilidade e orçamentos de performance.
 
-## Sobre o projeto
+---
 
-Landing page com experiência imersiva em 3D/VR rodando direto no navegador (WebXR),
-com fallback em 3D convencional para quem não tem headset.
+## 🎯 Sobre o Projeto & Escopo Atual
 
-| Campo | Valor |
-| --- | --- |
-| Repositório | `LP-with-VR` |
-| Status | Em concepção — stack ainda não fechada |
-| Estado atual do código | Apenas `package.json` (`type: commonjs`), sem dependências |
-| Stack proposta | Vite + TypeScript + React + Three.js/R3F — ver [[Stack-Tecnologica]] |
-| Responsável | Rafael |
+O **VOID Spatial Optics** é uma aplicação web de prova virtual (*Try-On Facial 3D*) que executa inferência de visão computacional em tempo real (468 landmarks) diretamente no navegador via WebAssembly e WebGL 2.0.
 
-## Mapa do vault
+- **Conceito & Finalidade**: Projeto conceitual desenvolvido para estudo, prática e treinamento técnico em engenharia de frontend, visão computacional e computação gráfica. Não é um produto comercial e não está à venda.
+- **Pivô Arquitetural**: Conforme documentado em [[ADR-0003-Feature-Try-On-Facial]], a experiência foi transferida de uma dependência de WebXR/headset para um modelo monocular por câmera frontal acessível a qualquer smartphone ou computador comum.
+- **Privacidade por Design (LGPD/GDPR)**: 100% On-Device. Zero frames de vídeo ou coordenadas biométricas transmitidas pela rede.
 
-| Pasta | O que vive aqui |
-| --- | --- |
-| [[01-Visao-Geral]] | Objetivo, escopo, público-alvo, requisitos |
-| [[02-Arquitetura]] | Stack, estrutura de pastas, fluxo de dados |
-| [[03-Desenvolvimento]] | Setup, convenções, arquivos de engenharia |
-| [[04-Design-e-UX]] | Identidade visual, conforto e acessibilidade em VR |
-| [[05-VR-e-3D]] | Tracking, dispositivos, assets, performance |
-| [[06-Analytics-e-Tracking]] | Medição, eventos, conversão, LGPD |
-| [[07-Decisoes]] | ADRs — decisões técnicas registradas |
-| [[08-Operacoes]] | Build, deploy, ambientes, monitoramento |
-| [[09-Referencias]] | Links, specs, inspirações |
-| `99-Templates` | Modelos de nota (ADR, RFC, nota comum) |
-| `Assets` | Imagens, diagramas e anexos |
+---
 
-## Mapa visual
+## 🗺️ Mapa de Navegação do Vault
 
 ```mermaid
 flowchart TD
-    H[Home] --> V1[01 Visão Geral]
-    H --> V2[02 Arquitetura]
-    H --> V3[03 Desenvolvimento]
-    H --> V4[04 Design e UX]
-    H --> V5[05 VR e 3D]
-    H --> V6[06 Analytics e Tracking]
-    H --> V7[07 Decisões]
-    H --> V8[08 Operações]
-    H --> V9[09 Referências]
-    V1 --> V2
+    H[🏠 Home do Vault] --> V1[01 Visão Geral]
+    H --> V2[02 Arquitetura & Sistema]
+    H --> V3[03 Desenvolvimento & Setup]
+    H --> V4[04 Design, UX & Acessibilidade]
+    H --> V5[05 Visão 3D & Tracking]
+    H --> V6[06 Analytics & LGPD]
+    H --> V7[07 Decisões de Engenharia ADRs]
+    H --> V8[08 Operações & Build]
+
     V2 --> V5
-    V4 --> V5
-    V5 --> V6
-    V2 --> V7
-    V3 --> V7
+    V4 --> V2
+    V5 --> V7
     V2 --> V8
 ```
 
-## Comece por aqui
+---
 
-| Se você quer… | Leia |
-| --- | --- |
-| Entender o que é o produto | [[Escopo]] |
-| Entender como o VR rastreia a cabeça e as mãos | [[Como-Funciona-o-Tracking]] |
-| Saber qual stack usar e por quê | [[Stack-Tecnologica]] |
-| Rodar o projeto localmente | [[Setup-do-Ambiente]] |
-| Saber quais docs manter no repositório | [[Arquivos-de-Engenharia]] |
-| Preparar modelos 3D para a web | [[Pipeline-de-Assets-3D]] |
-| Não estourar o frame budget | [[Orcamento-de-Performance]] |
-| Medir conversão sem violar a LGPD | [[Plano-de-Eventos]] |
+## 📑 Índice Detalhado por Disciplina
 
-## Convenções do vault
+### 🏗️ 02. Arquitetura e Engenharia de Software
+- [[02-Arquitetura]] — Topologia do sistema, diagrama de camadas e justificativas de separação de reconcilers.
+- [[Stack-Tecnologica]] — Comparativo técnico de engines (Three.js vs Babylon vs A-Frame) e pipeline MediaPipe.
+- [[Estrutura-de-Pastas]] — Organização de diretórios e contratos de isolamento de módulos.
+- [[Fluxo-de-Dados]] — Máquinas de estado do `useCamera`, render loop a 60 FPS, sincronização `useSyncExternalStore` e acessibilidade.
 
-- **Nomes de arquivo**: `Kebab-Case-Com-Iniciais-Maiusculas.md`, sem acentos no nome
-  (acentuação correta sempre no conteúdo).
-- **Frontmatter**: todo arquivo começa com `title`, `tags`, `criado`, `atualizado`.
-- **Links**: use `[[wikilinks]]` em vez de caminhos relativos.
-- **Um assunto por nota**: notas longas viram MOC + notas filhas.
-- **Datas**: formato `AAAA-MM-DD`.
-- **Status**: `rascunho` → `em-revisao` → `estavel` → `obsoleto` no frontmatter.
+### 🎨 04. Design System, UX e Inclusão
+- [[Identidade-Visual]] — Especificação completa das paletas Branco-Nuvem (Claro) e Azul Midnight (Escuro), tipografia Apple e acabamento de hardware.
+- [[Acessibilidade-e-Conforto-VR]] — Motor dinâmico `--font-scale` (88% a 138%), contraste WCAG 2.1 AA/AAA, redução de movimento e navegação WAI-ARIA.
 
-## Backlog da documentação
+### 👁️ 05. Visão Computacional, 3D e Performance
+- [[Como-Funciona-o-Tracking]] — Decomposição da matriz 4x4, equações SLERP/LERP, vetor de offset dos olhos (`eyeLevelOffsetM`) e FOV adaptativo.
+- [[Orcamento-de-Performance]] — Frame budget (16.6ms), diagnóstico de gargalos e roadmap de melhorias (Web Workers, KTX2, DPR Throttling).
+- [[Pipeline-de-Assets-3D]] — Scripts de automação `generate-placeholder-glasses.mjs` e compressão Draco/Meshopt com `optimize-glb.mjs`.
+- [[Suporte-de-Dispositivos]] — Matriz de compatibilidade em navegadores iOS, Android, macOS e Windows.
 
-- [ ] Fechar a stack e registrar em [[ADR-0002-Stack-Base]]
-- [ ] Escrever o [[Escopo]] com o objetivo real de conversão
-- [ ] Definir os eventos de [[Plano-de-Eventos]]
-- [ ] Preencher [[Setup-do-Ambiente]] depois do scaffold do projeto
-- [ ] Rodar o teste em dispositivo real e preencher [[Suporte-de-Dispositivos]]
+### 🔒 06. Privacidade e Decisões Técnicas
+- [[LGPD-e-Consentimento]] — Arquitetura de isolamento biométrico local e diretrizes de privacidade.
+- [[ADR-0001-Registro-de-Decisoes]] — Padrão de documentação de decisões arquiteturais.
+- [[ADR-0002-Stack-Base]] — Definição da stack inicial TypeScript + Vite + React + Three.js.
+- [[ADR-0003-Feature-Try-On-Facial]] — Pivô de produto e adoção de MediaPipe Face Landmarker.
+
+---
+
+## ⚡ Guia Rápido: Por Onde Começar?
+
+| Se você deseja... | Consulte a nota... |
+|---|---|
+| Compreender a arquitetura completa do sistema | [[02-Arquitetura]] |
+| Entender a matemática da matriz 4x4 e do filtro anti-jitter | [[Como-Funciona-o-Tracking]] |
+| Analisar os pontos de melhoria de desempenho (Web Workers, KTX2) | [[Orcamento-de-Performance]] |
+| Conhecer o motor de escala de fonte e tema Midnight | [[Acessibilidade-e-Conforto-VR]] |
+| Reproduzir o setup local de desenvolvimento | [[Setup-do-Ambiente]] |
+
+---
+
+## 📜 Convenções do Vault
+- **Linguagem**: Português técnico com diagramas em Mermaid e notação matemática em LaTeX.
+- **Links**: Sintaxe `[[Nota]]` para navegação bidirecional no Obsidian.
+- **Status**: Todas as notas foram revisadas e consolidadas no padrão `estavel`.

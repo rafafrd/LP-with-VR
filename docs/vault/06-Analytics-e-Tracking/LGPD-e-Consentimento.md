@@ -5,7 +5,7 @@ tags:
   - privacidade
   - lgpd
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-14
 status: rascunho
 ---
 
@@ -62,7 +62,38 @@ Só use um CMP quando houver de fato tag que precise de consentimento. Nesse cas
 - Escolha registrada e revogável, com link permanente no rodapé.
 - Opções open source: **Klaro!** (Apache-2.0), **Orestbida cookieconsent** (MIT).
 
-## Caso especial: dados de VR
+## Caso especial: dados faciais/câmera (feature de try-on)
+
+> Atualizado por [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14) — substitui, na
+> prática, o caso de dados de VR abaixo (histórico, preservado) como o cenário sensível
+> ativo do projeto.
+
+A feature liga a câmera do dispositivo e roda detecção de landmarks faciais em tempo
+real. Isso é categoricamente mais sensível do que a pose de VR que este documento já
+tratava com cautela: **imagem de rosto e landmarks faciais são dado biométrico**, e a
+LGPD (art. 5º, II) trata dado biométrico como **dado pessoal sensível** — regime mais
+restrito que dado pessoal comum, com base legal mais estreita (tipicamente
+consentimento específico e destacado) e maior exigência de segurança/minimização.
+
+**Regra do projeto**: vídeo da câmera e landmarks/matriz de pose facial **não saem do
+dispositivo**. Todo o processamento (`@mediapipe/tasks-vision`, WASM) roda localmente
+no navegador; nenhum frame, imagem ou coordenada de landmark é enviado para servidor,
+analytics ou qualquer terceiro. Isso muda o enquadramento pela mesma lógica do
+[[Ferramentas-de-Analytics]] cookieless: sem dado saindo do dispositivo, não há
+tratamento de dado sensível pelo projeto — mas isso só é verdade **enquanto for
+verdade tecnicamente**, então qualquer mudança que envie vídeo/landmark para fora exige,
+antes de ir ao ar: consentimento específico e destacado (não genérico), nota própria
+neste vault e revisão jurídica.
+
+Mínimo mesmo sem enviar dado a lugar nenhum:
+- **Pedido de permissão de câmera com contexto** — antes do prompt nativo do navegador,
+  explicar em uma frase por que a câmera é necessária e que nada sai do dispositivo.
+- **Indicador visível de câmera ativa** enquanto a sessão de try-on está rodando (além
+  do indicador do próprio navegador/SO).
+- **Encerrar a câmera (`track.stop()`) ao sair da feature** — não deixar o `MediaStream`
+  vivo além do necessário.
+
+## Caso especial: dados de VR (histórico, pré-ADR-0003)
 
 Pose de cabeça e mãos revela mais do que parece — altura, padrão de movimento,
 características físicas. Literatura recente mostra que sequências de movimento em VR
@@ -82,6 +113,9 @@ possivelmente tratamento de dado sensível.
 - [ ] Nenhuma requisição para domínio de terceiro antes de consentimento (verificar na aba Network)
 - [ ] Nenhum dado pessoal em propriedade de evento — ver [[Plano-de-Eventos]]
 - [ ] Nenhum dado de pose enviado para fora do dispositivo
+- [ ] Nenhum frame de vídeo ou landmark facial enviado para fora do dispositivo
+- [ ] Aviso de contexto antes do prompt nativo de permissão de câmera
+- [ ] Câmera encerrada (`track.stop()`) ao sair da feature de try-on
 
 ## Fontes
 

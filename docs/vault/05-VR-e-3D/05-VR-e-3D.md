@@ -9,40 +9,49 @@ atualizado: 2026-08-12
 
 # 🥽 VR e 3D
 
-Tudo que envolve a experiência imersiva: como o hardware rastreia o usuário, o que cada
-dispositivo suporta, como preparar os assets e quanto custa cada frame.
+> **Atualizado por [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14).** O produto deixou
+> de ter sessão `immersive-vr` — [[Como-Funciona-o-Tracking]] e
+> [[Suporte-de-Dispositivos]] foram substituídas e descrevem a versão anterior do
+> produto (registro histórico, não apagado). [[Pipeline-de-Assets-3D]] e
+> [[Orcamento-de-Performance]] continuam valendo — ainda é uma cena Three.js
+> renderizando GLB, só que ancorada num rosto detectado por câmera, não numa sessão XR.
+
+Tudo que envolve a camada 3D da feature: como o modelo é ancorado no rosto, como
+preparar os assets e quanto custa cada frame.
 
 ## Notas desta área
 
 | Nota | Assunto |
 | --- | --- |
-| [[Como-Funciona-o-Tracking]] | 6DoF, SLAM, reference spaces, mãos e controles |
-| [[Suporte-de-Dispositivos]] | Matriz de compatibilidade e estratégia de fallback |
-| [[Pipeline-de-Assets-3D]] | glTF/GLB, Draco, Meshopt, KTX2 |
-| [[Orcamento-de-Performance]] | 11,1 ms por frame: onde ele é gasto |
+| ~~[[Como-Funciona-o-Tracking]]~~ | Substituída — 6DoF, SLAM, reference spaces de headset (histórico) |
+| ~~[[Suporte-de-Dispositivos]]~~ | Substituída — matriz de compatibilidade WebXR (histórico) |
+| [[Pipeline-de-Assets-3D]] | glTF/GLB, Draco, Meshopt, KTX2 — ainda válido |
+| [[Orcamento-de-Performance]] | Onde o tempo de frame é gasto — ainda válido em espírito |
+
+Para como a detecção/ancoragem facial funciona hoje, ver [[Stack-Tecnologica]] §0 e
+[[ADR-0003-Feature-Try-On-Facial]].
 
 ## Princípios adotados
 
-1. **Progressive enhancement.** A landing page precisa converter mesmo sem WebXR.
-   VR é camada extra, nunca requisito.
-2. **Feature detection por módulo.** Nunca por user-agent. Hand tracking, hit-test e
-   anchors variam por dispositivo, não por marca.
-3. **Conforto acima de espetáculo.** Nenhum movimento de câmera sem input do usuário.
+1. **Progressive enhancement.** A feature precisa se comunicar claramente mesmo quando
+   a câmera/detecção facial falha. Fallback de erro é requisito, não afterthought.
+2. **Feature detection por módulo.** Nunca por user-agent — `getUserMedia`, WASM e
+   suporte a `OffscreenCanvas` são checados por capacidade, não por navegador.
+3. **Estabilidade acima de espetáculo.** Suavizar a pose entre frames é obrigatório —
+   jitter visível é o principal jeito da feature parecer quebrada.
 4. **Orçamento antes de arte.** Modelo que estoura o budget volta para o pipeline.
 
 ## Fluxo da experiência
 
 ```mermaid
 flowchart TD
-    A[Visitante abre a LP] --> B{navigator.xr existe?}
-    B -- não --> C[Cena 3D em canvas comum]
-    B -- sim --> D{immersive-vr suportado?}
-    D -- não --> C
-    D -- sim --> E[Exibe CTA 'Entrar em VR']
-    E --> F[requestSession + local-floor]
-    F --> G[Loop XR: getViewerPose por frame]
-    C --> H[CTA de conversão]
-    G --> H
+    A[Pessoa abre a feature] --> B[Pede permissão de câmera]
+    B -- negada/sem câmera --> C[Fallback de erro, claro e acionável]
+    B -- concedida --> D[Face Landmarker detecta o rosto]
+    D -- rosto não encontrado --> E[Aviso visível, sem crash]
+    D -- rosto detectado --> F[Ancora o GLB escolhido via facialTransformationMatrixes]
+    F --> G[Compõe vídeo espelhado + overlay 3D]
+    G --> D
 ```
 
 ⬅ [[Home]]

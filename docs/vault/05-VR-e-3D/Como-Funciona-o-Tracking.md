@@ -1,247 +1,197 @@
 ---
-title: Como Funciona o Tracking
+title: Como Funciona o Tracking Facial e Ancoragem 3D
 tags:
-  - vr
-  - webxr
   - tracking
+  - mediapipe
+  - face-landmarker
+  - matematica-3d
+  - quaternions
 criado: 2026-08-12
-atualizado: 2026-08-12
+atualizado: 2026-08-17
 status: estavel
 ---
 
-# Como Funciona o Tracking (VR/WebXR)
+# 👁️ Como Funciona o Tracking Facial e Ancoragem 3D
 
-> "Tracking" em VR é o processo de descobrir, dezenas de vezes por segundo, **onde estão
-> a cabeça e as mãos do usuário no espaço físico**, e traduzir isso em matrizes de câmera
-> e transformações dentro da cena 3D.
-
-Para a medição de comportamento na landing page, veja [[06-Analytics-e-Tracking]] —
-é outro sentido da palavra "tracking".
+Este documento detalha a matemática, os sistemas de coordenadas, o pipeline de visão computacional e os algoritmos de estabilização temporal utilizados para ancorar modelos 3D no rosto do usuário em tempo real a 60 FPS.
 
 ---
 
-## 1. Graus de liberdade (DoF)
+## 📐 1. O Problema de Ancoragem Facial na Web
 
-| Tipo | O que rastreia | Onde aparece | Efeito |
-| --- | --- | --- | --- |
-| **3DoF** | Só rotação (yaw, pitch, roll) | Cardboard, óculos simples, celular | Você olha em volta, mas não pode se aproximar de um objeto |
-| **6DoF** | Rotação + translação (x, y, z) | Quest 2/3/Pro, Vision Pro, Android XR | Você anda, se agacha, chega perto |
+Ancorar um objeto 3D rígido (óculos/visor) sobre um feed de vídeo 2D em tempo real envolve três desafios fundamentais:
 
-Se o dispositivo só oferece 3DoF, o navegador entrega uma **posição emulada**
-(`XRPose.emulatedPosition === true`). É um sinal importante: quando ele é `true`,
-qualquer mecânica que dependa de o usuário se deslocar fisicamente deve ser desabilitada.
-
-## 2. Inside-out vs outside-in
-
-- **Outside-in** (antigo): sensores externos na sala (base stations) observam o headset.
-  Preciso, mas exige instalação.
-- **Inside-out** (padrão atual): as câmeras do próprio headset observam o ambiente.
-  Sem hardware extra — é o que Quest, Vision Pro e Android XR usam.
-
-O inside-out roda um **SLAM** (*Simultaneous Localization and Mapping*): as câmeras
-extraem pontos característicos do ambiente, montam um mapa esparso e calculam a posição
-do headset dentro desse mapa. Em paralelo, a **IMU** (acelerômetro + giroscópio, ~1 kHz)
-fornece movimento de altíssima frequência. Um filtro funde as duas fontes:
-
-```
-IMU (rápida, acumula deriva)  ─┐
-                               ├─► fusão sensorial ──► pose estável a 90–120 Hz
-Câmeras/SLAM (lenta, absoluta)─┘
-```
-
-Consequências práticas para o projeto:
-- **Ambiente escuro ou parede lisa e branca** degrada o SLAM → a pose "escorrega".
-- **Superfícies reflexivas / espelhos** confundem o mapa.
-- Depois de um *reset* de tracking, a origem do mundo muda — trate o evento
-  `reset` do reference space (seção 4).
-
-## 3. O loop de renderização em XR
-
-O tracking chega ao seu código pelo laço de frames da sessão XR:
-
-```js
-// 1. Detecção de suporte — sempre antes de mostrar o botão "Entrar em VR"
-const suportado = await navigator.xr?.isSessionSupported('immersive-vr');
-
-// 2. Sessão (exige gesto do usuário: clique/tap)
-const session = await navigator.xr.requestSession('immersive-vr', {
-  requiredFeatures: ['local-floor'],
-  optionalFeatures: ['hand-tracking', 'bounded-floor', 'layers'],
-});
-
-// 3. Espaço de referência: o "sistema de coordenadas" da experiência
-const refSpace = await session.requestReferenceSpace('local-floor');
-
-// 4. Loop — o navegador chama quando o compositor precisa do próximo frame
-session.requestAnimationFrame(function onXRFrame(time, frame) {
-  const pose = frame.getViewerPose(refSpace); // pode ser null se o tracking se perdeu
-  if (pose) {
-    for (const view of pose.views) {
-      // view.eye → 'left' | 'right'
-      // view.projectionMatrix e view.transform.matrix alimentam a câmera
-    }
-  }
-  session.requestAnimationFrame(onXRFrame);
-});
-```
+1. **Estimativa de Pose 6DoF a partir de Imagem 2D Monocular**: Deduzir translação $(X, Y, Z)$ e rotação (Pitch, Yaw, Roll) a partir de pixels de uma webcam comum sem sensor de profundidade (LiDAR).
+2. **Jitter de Detecção (Ruído Frame a Frame)**: Micro-variações nos pixels de entrada provocam tremores de alta frequência na matriz de pose se ela for aplicada crua.
+3. **Casamento de Perspectiva (Aspect Ratio & FOV Alignment)**: O feed de vídeo 2D e a câmera virtual do Three.js devem compartilhar exatamente a mesma perspectiva óptica para que os óculos não pareçam "flutuar" longe do rosto.
 
 ```mermaid
-sequenceDiagram
-    participant Nav as navigator.xr
-    participant Sess as XRSession
-    participant Ref as ReferenceSpace
-    participant App as Loop da aplicação
+flowchart TD
+    subgraph VideoFeed["1. Feed Monocular 2D"]
+        VF[getUserMedia: 1280x720] --> ML[MediaPipe Face Landmarker]
+    end
 
-    App->>Nav: isSessionSupported('immersive-vr')
-    Nav-->>App: true/false
-    App->>Sess: requestSession() (gesto do usuário)
-    Sess->>Ref: requestReferenceSpace('local-floor')
-    loop a cada frame (72-120 Hz)
-        Sess->>App: requestAnimationFrame(time, frame)
-        App->>Sess: frame.getViewerPose(refSpace)
-        Sess-->>App: pose (ou null)
-        App->>App: renderiza os 2 olhos
+    subgraph NeuralInference["2. Inferência Neural & Modelo Canônico"]
+        ML --> KP[468 Landmarks 3D]
+        ML --> PnP[PnP Solver Interno]
+        PnP --> RAW_MAT[Matriz 4x4 Coluna-Principal]
+    end
+
+    subgraph SmoothingPipeline["3. Pipeline de Estabilização FacePoseSmoother"]
+        RAW_MAT --> DECOMPOSE[Decomposição: Pos + Quat + Escala]
+        DECOMPOSE --> SLERP[SLERP Quaternions: alpha = 0.35]
+        DECOMPOSE --> LERP[LERP Posição: cm para metros]
+        DECOMPOSE --> HOLD[Máquina de Retenção: 400ms Hold + Fade]
+    end
+
+    subgraph R3FScene["4. Cena R3F & Offset Anatômico"]
+        SLERP --> ANCHOR[AnchoredGlasses Group]
+        LERP --> ANCHOR
+        ANCHOR --> EYE_OFFSET["Offset Vertical +2.2cm Local (eyeLevelOffsetM)"]
+        EYE_OFFSET --> RENDER[Renderização PBR a 60 FPS]
     end
 ```
 
-Pontos que costumam morder:
-- `getViewerPose()` **pode retornar `null`** (usuário tirou o headset, tracking perdido).
-  Nunca assuma pose válida — desenhe o último frame conhecido ou pause.
-- Em XR você usa `session.requestAnimationFrame`, **não** `window.requestAnimationFrame`.
-  A cadência é a do headset (72/90/120 Hz), não a do monitor.
-- Cada olho é uma `view` com projeção própria: a cena é desenhada duas vezes por frame.
+---
 
-## 4. Espaços de referência (a parte que mais confunde)
+## 🔢 2. Decomposição da Matriz 4×4 do MediaPipe
 
-O `XRReferenceSpace` define onde fica a origem `(0,0,0)` e que tipo de movimento é
-garantido. Escolher errado é a causa nº 1 de "o usuário nasce dentro do chão".
+O MediaPipe Face Landmarker fornece a `facialTransformationMatrix`, uma matriz homogênea de transformação $4 \times 4$ no formato coluna-principal (*column-major*):
 
-| Tipo | Origem | Quando usar |
-| --- | --- | --- |
-| `viewer` | Na cabeça do usuário, acompanha ela | Raycast a partir do olhar, HUD travado na visão |
-| `local` | Perto da posição inicial, altura **não garantida** | Experiências sentadas/em pé sem deslocamento |
-| `local-floor` | No **chão**, abaixo da posição inicial | **Padrão para a maioria** — y=0 é o piso real |
-| `bounded-floor` | No chão, com polígono de área segura (`boundsGeometry`) | Usuário caminha dentro da guardian |
-| `unbounded` | Origem estável em grandes áreas | Experiências que atravessam cômodos |
+$$\mathbf{M} = \begin{bmatrix} 
+r_{00} & r_{01} & r_{02} & t_x \\
+r_{10} & r_{11} & r_{12} & t_y \\
+r_{20} & r_{21} & r_{22} & t_z \\
+0 & 0 & 0 & 1 
+\end{bmatrix}$$
 
-Recomendação para a LP: pedir `local-floor` como `requiredFeatures` e cair para `local`
-se não houver suporte. Com `local`, aplique um offset manual de altura (~1,6 m) porque
-o piso não é conhecido.
+### Conversão de Escala Métrica
+- O MediaPipe calcula as coordenadas de translação $(t_x, t_y, t_z)$ em **centímetros**.
+- O Three.js adota a convenção métrica internacional padrão do WebXR (**1 unidade = 1 metro**).
+- No `FacePoseSmoother.ts`, a conversão é efetuada automaticamente:
 
-```js
-let refSpace;
-try {
-  refSpace = await session.requestReferenceSpace('local-floor');
-} catch {
-  const base = await session.requestReferenceSpace('local');
-  // desce o mundo para simular um piso
-  refSpace = base.getOffsetReferenceSpace(
-    new XRRigidTransform({ x: 0, y: -1.6, z: 0 })
-  );
-}
+$$\mathbf{p}_{\text{ThreeJS}} = \begin{bmatrix} t_x \times 0.01 \\ t_y \times 0.01 \\ t_z \times 0.01 \end{bmatrix}$$
 
-// A origem pode ser recalibrada pelo sistema a qualquer momento:
-refSpace.addEventListener('reset', () => {
-  // reposicione teleporte, UI ancorada e checkpoints
-});
+---
+
+## 🔄 3. Algoritmo de Suavização Temporal (`FacePoseSmoother`)
+
+Para eliminar o tremor (*jitter*) sem introduzir latência perceptível (mantendo o atraso abaixo de $\sim 40\text{ms}$), o sistema utiliza interpolação esférica nos quaternions e interpolação linear nas posições.
+
+### SLERP (Spherical Linear Interpolation) para Rotação
+Dados o quaternion anterior $\mathbf{q}_0$ e o quaternion do frame atual $\mathbf{q}_1$:
+
+$$\mathbf{q}_{\text{interpolado}} = \text{slerp}(\mathbf{q}_0, \mathbf{q}_1, \alpha)$$
+
+onde $\alpha = 0.35$ (fator de suavização calibrado). Se $\mathbf{q}_0 \cdot \mathbf{q}_1 < 0$, invertemos o sinal de $\mathbf{q}_1$ para garantir o caminho geodésico mais curto na esfera quadridimensional.
+
+### LERP (Linear Interpolation) para Posição
+
+$$\mathbf{p}_{\text{interpolado}} = \mathbf{p}_0 + \alpha (\mathbf{p}_1 - \mathbf{p}_0)$$
+
+### Máquina de Estados de Perda de Rastreamento (Tolerância a Oclusão)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Tracking: Rosto detectado (status = ready)
+
+    state Tracking {
+        [*] --> ActivePose: Frame recebido
+        ActivePose --> ActivePose: SLERP/LERP contínuo (alpha 0.35)
+    }
+
+    Tracking --> Holding: Rosto ocluído / Detecção falhou (< 400ms)
+    
+    state Holding {
+        [*] --> FreezePose: Mantém última pose válida estável
+        FreezePose --> Tracking: Rosto reaparece
+        FreezePose --> Fading: Tempo sem rosto > 400ms
+    }
+
+    state Fading {
+        [*] --> FadeOut: Escala atenuada suavemente de 1.0 para 0.0
+        FadeOut --> Tracking: Rosto reaparece
+        FadeOut --> Hidden: Tempo > 800ms
+    }
+
+    state Hidden {
+        [*] --> Invisible: group.visible = false
+        Invisible --> Tracking: Rosto reaparece
+    }
 ```
 
-`getOffsetReferenceSpace()` também é o mecanismo correto de **teleporte / locomoção**:
-em vez de mover a câmera (que é controlada pelo tracking), você move o espaço de
-referência sob o usuário.
+---
 
-## 5. Tracking de entrada: controles e mãos
+## 📍 4. Correção Anatômica do Nível dos Olhos (`EYE_LEVEL_OFFSET_M`)
 
-Cada `XRInputSource` expõe espaços próprios:
+A matriz canônica do MediaPipe tem sua origem centrada entre o nariz e o septo superior. Se o modelo 3D for inserido diretamente nessa origem, a armação ficará apoiada no meio do nariz em vez de repousar sobre os olhos e têmporas.
 
-| Espaço | Para que serve |
-| --- | --- |
-| `targetRaySpace` | O raio de mira (laser pointer) — use para hover/seleção |
-| `gripSpace` | A pose da mão segurando — use para posicionar o modelo do controle |
+### A Matemática do Offset em Espaço Local:
 
-```js
-for (const src of session.inputSources) {
-  const raio = frame.getPose(src.targetRaySpace, refSpace);
-  const mao  = src.gripSpace ? frame.getPose(src.gripSpace, refSpace) : null;
+Não se pode somar um valor estático no eixo $Y$ global do Three.js, pois quando o usuário inclinar a cabeça para o lado (*roll*) ou para frente (*pitch*), o deslocamento subiria em direção ao teto em vez de seguir a testa.
 
-  // src.handedness → 'left' | 'right' | 'none'
-  // src.targetRayMode → 'gaze' | 'tracked-pointer' | 'screen' | 'transient-pointer'
-}
+O deslocamento de $+2.2\text{cm}$ é rotacionado pelo quaternion da cabeça:
+
+$$\mathbf{v}_{\text{offset}} = \mathbf{q}_{\text{atual}} \otimes \begin{bmatrix} 0 \\ 0.022 \\ 0 \end{bmatrix} \otimes \mathbf{q}_{\text{atual}}^{-1}$$
+
+$$\mathbf{p}_{\text{final}} = \mathbf{p}_{\text{interpolado}} + \mathbf{v}_{\text{offset}}$$
+
+```typescript
+// Implementação em AnchoredGlasses.tsx com ZERO alocação:
+_offsetLocal.set(0, eyeLevelOffsetM, 0).applyQuaternion(group.quaternion);
+group.position.copy(pose.position).add(_offsetLocal);
 ```
 
-Eventos de sessão que valem escutar: `select` / `selectstart` / `selectend`
-(gatilho ou pinça), `squeeze*` (agarrar), `inputsourceschange` (controle ligou/desligou,
-mão entrou em campo), `visibilitychange` (headset removido) e `end`.
+---
 
-**Hand tracking** (módulo `hand-tracking`): quando concedido, `inputSource.hand` é um
-`XRHand` com ~25 articulações por mão (`wrist`, `index-finger-tip`, …).
+## 📷 5. Sincronização de Câmera e FOV Adaptativo (`AdaptiveCameraController`)
 
-```js
-if (src.hand) {
-  const ponta = frame.getJointPose(src.hand.get('index-finger-tip'), refSpace);
-  if (ponta) {
-    // ponta.transform.position e ponta.radius (raio da articulação)
-  }
-}
+Para que o modelo 3D acompanhe a mesma deformação de perspectiva da lente da webcam sob regras CSS de `object-fit: cover`:
+
+```mermaid
+flowchart LR
+    A[Resolução da Webcam: 1280x720] --> B[Aspect Ratio do Stream: 16/9]
+    C[Dimensões do Container DOM: WxH] --> D[Aspect Ratio do Container: W/H]
+    
+    B --> E{Container mais largo que o vídeo?}
+    D --> E
+    
+    E -->|Sim: Corte Topo/Base| F["Ajusta FOV Vertical:<br/>2 * atan(tan(baseFOV/2) * (StreamAspect / ContainerAspect))"]
+    E -->|Não: Corte Lateral| G["Mantém FOV Vertical Canônico:<br/>63.0° (MediaPipe Standard)"]
 ```
 
-**Importante para compatibilidade**: no Apple Vision Pro a interação padrão é
-*gaze-and-pinch*, que chega como `targetRayMode: 'transient-pointer'` — a fonte de
-entrada só existe durante o gesto. Se a UI depender de hover contínuo com laser, ela
-simplesmente não funciona lá. Projete a seleção em torno de `select`, não de hover.
+### Modo Preview vs Modo Tracking:
+- **Modo Preview (Câmera Desligada)**: Câmera em $[0, 0, 0.3]$, FOV de $42^\circ$, `OrbitControls` ativo com rotação suave e amortecimento inercial (`dampingFactor = 0.06`).
+- **Modo Tracking (Câmera Ativa)**: Câmera posicionada na origem $[0, 0, 0]$, FOV vertical dinâmico ajustado à lente da webcam, `OrbitControls` desativado.
 
-## 6. Tracking do mundo real (AR / passthrough)
+---
 
-Só relevante se a LP tiver modo AR no celular ou passthrough no Quest:
+## 🪞 6. Espelhamento Selfie CSS Unificado
 
-| Módulo | O que dá | Suporte |
-| --- | --- | --- |
-| `hit-test` | Encontrar superfícies reais sob um raio | Chrome Android, Quest |
-| `anchors` | Fixar objeto a um ponto do mundo, resistente a drift | Quest; persistentes entre sessões |
-| `plane-detection` | Planos horizontais/verticais com rótulo semântico | Quest |
-| `depth-sensing` | Mapa de profundidade para oclusão | Chrome Android, Quest |
-| `mesh-detection` | Malha da sala | Quest |
+```
+┌───────────────────────────────────────────────────────────┐
+│ Container comum: transform: scaleX(-1)                    │
+│                                                           │
+│   ┌───────────────────────────┬───────────────────────┐   │
+│   │ <video> (Câmera Frontal)  │ <Canvas> (Three.js)   │   │
+│   │ object-fit: cover         │ Transparent WebGL     │   │
+│   │ Z-Index: 1                │ Z-Index: 2            │   │
+│   └───────────────────────────┴───────────────────────┘   │
+└───────────────────────────────────────────────────────────┘
+```
 
-Nada disso está habilitado no Safari/visionOS até agora — o módulo de AR do WebXR não
-foi liberado lá. **Feature-detect módulo a módulo**, nunca por dispositivo.
+Vantagens desta abordagem:
+1. **Normais de Iluminação Preservadas**: Não inverte a escala $X$ das malhas 3D no Three.js, mantendo a reflexão de luz PBR e sombras corretas.
+2. **Zero Overhead de CPU**: O espelhamento é delegado ao compositor de renderização da GPU pelo navegador via CSS Hardware Acceleration.
+3. **UI Independente**: Controles, botões e textos ficam em uma camada de overlay separada fora do container espelhado, permanecendo sempre legíveis.
 
-## 7. Latência e conforto
+---
 
-O que o usuário sente como "enjoo" é quase sempre latência ou queda de frame:
+## 📚 Documentos Relacionados
 
-- **Motion-to-photon** alvo: **< 20 ms**. Acima disso, desconforto sobe rápido.
-- O compositor aplica **reprojection / timewarp**: se seu frame atrasa, ele reprojeta
-  o anterior usando a pose mais recente. Salva a rotação, mas gera artefato em
-  translação — não é uma rede de segurança para código lento.
-- Frame budget a 90 Hz: **11,1 ms por frame**, para os dois olhos. Ver [[Orcamento-de-Performance]].
-- **Nunca mova a câmera sem input do usuário.** Aceleração artificial, shake e
-  cutscenes com movimento forçado são as principais causas de cybersickness.
-
-## 8. Checklist de implementação
-
-- [ ] `isSessionSupported()` antes de exibir qualquer CTA de VR
-- [ ] Sessão criada apenas dentro de um gesto do usuário
-- [ ] `local-floor` com fallback para `local` + offset de 1,6 m
-- [ ] Listener de `reset` no reference space
-- [ ] Guarda para `getViewerPose()` retornando `null`
-- [ ] `emulatedPosition` tratado (desabilitar mecânicas de deslocamento)
-- [ ] `hand-tracking` como `optionalFeatures`, com fallback para controles
-- [ ] Seleção baseada em `select`, funcionando com `transient-pointer`
-- [ ] Sessão encerrada e recursos liberados no evento `end`
-- [ ] Fallback 3D não-imersivo para quem não tem headset — ver [[Suporte-de-Dispositivos]]
-
-## Relacionados
-
-- [[Suporte-de-Dispositivos]] — quem suporta o quê
-- [[Orcamento-de-Performance]] — o custo de manter 90 fps
-- [[Acessibilidade-e-Conforto-VR]] — enjoo, alternativas de locomoção
-- [[Links-Uteis]] — specs e documentação oficial
-
-## Fontes
-
-- [WebXR Device API — Spatial Tracking Explainer](https://immersive-web.github.io/webxr/spatial-tracking-explainer.html)
-- [MDN — XRSession.requestReferenceSpace()](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestReferenceSpace)
-- [MDN — Using bounded reference spaces](https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Bounded_reference_spaces)
-- [Meta Horizon — WebXR Performance Best Practices](https://developers.meta.com/horizon/documentation/web/webxr-perf-bp/)
+- [[02-Arquitetura]] — Estrutura de módulos e design system
+- [[Fluxo-de-Dados]] — Diagramas de sequência do render loop
+- [[Orcamento-de-Performance]] — Otimizações de CPU/GPU e metas de FPS
+- [[ADR-0003-Feature-Try-On-Facial]] — Registro do pivô para MediaPipe Vision
 
 ⬅ [[05-VR-e-3D]]

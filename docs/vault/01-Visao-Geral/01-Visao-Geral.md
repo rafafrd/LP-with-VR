@@ -20,10 +20,15 @@ Por que o projeto existe, para quem ele é e o que ele precisa entregar.
 
 ## Resumo em uma frase
 
-> Uma landing page que usa uma experiência 3D/VR no navegador para explicar o produto
-> melhor do que texto e imagem conseguiriam — e converter mais por isso.
+> Uma feature de try-on facial: liga a câmera, escolhe um modelo de óculos/headset, e
+> vê o modelo 3D ancorado no próprio rosto em tempo real — sem loja, sem checkout, sem
+> sessão de headset. Ver [[ADR-0003-Feature-Try-On-Facial]] (2026-08-14).
 
 Essa frase é a régua: qualquer funcionalidade que não sirva a ela é candidata a corte.
+
+> Frase anterior (histórico, pré-ADR-0003): "Uma landing page que usa uma experiência
+> 3D/VR no navegador para explicar o produto melhor do que texto e imagem conseguiriam
+> — e converter mais por isso."
 
 ## Como as notas se encadeiam
 

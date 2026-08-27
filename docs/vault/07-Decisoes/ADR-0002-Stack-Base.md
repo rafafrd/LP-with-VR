@@ -4,17 +4,28 @@ tags:
   - adr
   - stack
 criado: 2026-08-12
-atualizado: 2026-08-12
-status: proposto
-data-decisao: 
+atualizado: 2026-08-14
+status: aceito
+data-decisao: 2026-08-14
+substituido-por: ADR-0003
 ---
 
 # ADR-0002 — Stack base do projeto
 
-**Status**: 🟡 **Proposto** — aguardando decisão · **Decisor**: Rafael
+**Status**: ✅ **Aceito** (parcialmente substituída por [[ADR-0003-Feature-Try-On-Facial]])
+· **Data**: 2026-08-14 · **Decisor**: Rafael
 
-> Este ADR está aberto de propósito. Ao fechar a escolha, preencha `data-decisao`,
-> mude o status para `aceito` e não edite mais o conteúdo.
+> Aceita retroativamente: o essencial desta proposta (Vite + TypeScript + React +
+> Three.js/R3F + Tailwind) já foi implementado e está em produção em `dev` (tasks 1-2).
+>
+> **Nota de atualização (2026-08-14)** — só a camada XR desta decisão foi revertida: o
+> produto deixou de ser uma landing page com sessão `immersive-vr` e virou uma feature
+> isolada de try-on facial. `@react-three/xr` e tudo relacionado a sessão de headset
+> saem da stack — ver [[ADR-0003-Feature-Try-On-Facial]] para o que entra no lugar
+> (`@mediapipe/tasks-vision` + `getUserMedia`). O resto do conteúdo abaixo (Vite, TS,
+> React, Three.js/R3F, Tailwind, Umami) permanece válido e não foi reaberto — conteúdo
+> original preservado como registro histórico da decisão, conforme
+> [[Arquivos-de-Engenharia]].
 
 ## Contexto
 

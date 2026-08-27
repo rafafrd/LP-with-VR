@@ -1,220 +1,26 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>VOID — a realidade tem um upgrade</title>
-<meta name="description" content="VOID é a camada 3D/WebXR que transforma sua landing page numa experiência que se sente, não só se lê. Sem headset, sem instalar nada." />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22none%22 stroke=%22%23CFFF04%22 stroke-width=%2210%22/></svg>" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/css/style.css" />
-</head>
-<body>
-
-  <!-- textura de grão fixa sobre toda a página -->
-  <div class="grain" aria-hidden="true"></div>
-  <div class="scanlines" aria-hidden="true"></div>
-
-  <!-- faixa de status estilo terminal -->
-  <div class="statusbar" role="presentation" aria-hidden="true">
-    <div class="statusbar__track">
-      <span>SYSTEM STATUS: ONLINE</span><span>·</span>
-      <span>WEBXR READY</span><span>·</span>
-      <span>FALLBACK 3D ATIVO</span><span>·</span>
-      <span>SEM APP</span><span>·</span>
-      <span>SEM ATRITO</span><span>·</span>
-      <span>BUILD 0.1.0</span><span>·</span>
-      <span>SYSTEM STATUS: ONLINE</span><span>·</span>
-      <span>WEBXR READY</span><span>·</span>
-      <span>FALLBACK 3D ATIVO</span><span>·</span>
-      <span>SEM APP</span><span>·</span>
-      <span>SEM ATRITO</span><span>·</span>
-      <span>BUILD 0.1.0</span><span>·</span>
-    </div>
-  </div>
-
-  <!-- navegação -->
-  <header class="nav" id="nav">
-    <div class="nav__inner">
-      <a href="#top" class="nav__logo" aria-label="VOID — início">
-        <span class="nav__logo-ring" aria-hidden="true"></span>
-        VOID
-      </a>
-      <nav class="nav__links" aria-label="Navegação principal">
-        <a href="#experiencia">Experiência</a>
-        <a href="#specs">Specs</a>
-        <a href="#como-funciona">Como funciona</a>
-        <a href="#acesso">Acesso</a>
-      </nav>
-      <a href="#acesso" class="btn btn--ghost-sm">Entrar</a>
-    </div>
-  </header>
-
-  <main id="top">
-
-    <!-- HERO -->
-    <section class="hero" id="hero">
-      <div class="hero__glow" aria-hidden="true"></div>
-      <div class="hero__inner enter">
-        <p class="eyebrow">WEBXR · SEM INSTALAR · 100% NAVEGADOR</p>
-        <h1 class="hero__title" data-text="A REALIDADE TEM UM UPGRADE.">
-          A REALIDADE TEM<br /><span class="glitch-text" data-text="UM UPGRADE.">UM UPGRADE.</span>
-        </h1>
-        <p class="hero__sub">
-          VOID é a camada 3D que transforma sua landing page numa experiência que se
-          sente, não só se lê. Sem headset, sem instalar nada — abre no navegador e
-          já funciona.
-        </p>
-        <div class="hero__cta">
-          <a href="#acesso" class="btn btn--primary">Entrar no VOID <span aria-hidden="true">→</span></a>
-          <a href="#como-funciona" class="btn btn--ghost">Ver como funciona</a>
-        </div>
-      </div>
-      <a href="#filosofia" class="scroll-cue" aria-label="Rolar para a próxima seção">
-        <span>role</span>
-        <span class="scroll-cue__line" aria-hidden="true"></span>
-      </a>
-    </section>
-
-    <!-- FILOSOFIA -->
-    <section class="philosophy" id="filosofia">
-      <div class="philosophy__inner">
-        <p class="eyebrow eyebrow--center reveal">FILOSOFIA</p>
-        <p class="philosophy__statement reveal">
-          A maioria das pessoas <span class="hl">não</span> vai vestir um headset.
-          Por isso o VOID nasce pra funcionar <span class="hl">sem</span> um —
-          e fica ainda melhor pra quem tem.
-        </p>
-        <div class="portal reveal" role="img" aria-label="Ilustração de um portal 3D girando, representando a experiência WebXR">
-          <div class="portal__ring portal__ring--1"></div>
-          <div class="portal__ring portal__ring--2"></div>
-          <div class="portal__ring portal__ring--3"></div>
-          <div class="portal__core"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- EXPERIÊNCIA / SPECS -->
-    <section class="features" id="experiencia">
-      <div class="features__head reveal">
-        <p class="eyebrow">EXPERIÊNCIA</p>
-        <h2>Progressive enhancement,<br />não promessa vazia.</h2>
-      </div>
-
-      <div class="features__grid" id="specs">
-        <article class="card reveal">
-          <div class="card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/></svg>
-          </div>
-          <h3>WebXR nativo</h3>
-          <p>Entra em VR direto do navegador, sem instalar app nem SDK. O headset é
-          detectado e a sessão abre na hora.</p>
-        </article>
-
-        <article class="card reveal">
-          <div class="card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M4 17h16M4 12h10M4 7h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </div>
-          <h3>Fallback 3D</h3>
-          <p>Sem headset? A experiência em 3D convencional carrega automaticamente —
-          ninguém fica de fora da conversa.</p>
-        </article>
-
-        <article class="card reveal">
-          <div class="card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M4 20 10 8l4 6 3-4 3 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <h3>Performance sob controle</h3>
-          <p>Orçamento de frame definido, LOD automático por dispositivo. Roda liso
-          até em celular de entrada.</p>
-        </article>
-
-        <article class="card reveal">
-          <div class="card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M13 3 5 14h6l-1 7 9-12h-7l1-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-          </div>
-          <h3>Zero fricção</h3>
-          <p>Um link. Abre. Converte. Sem cadastro pra ver a demo, sem app pra
-          baixar antes de sentir o produto.</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- COMO FUNCIONA -->
-    <section class="how" id="como-funciona">
-      <p class="eyebrow reveal">COMO FUNCIONA</p>
-      <div class="how__steps">
-        <div class="how__step reveal">
-          <span class="how__num">01</span>
-          <p>Alguém clica no link.</p>
-        </div>
-        <div class="how__step reveal">
-          <span class="how__num">02</span>
-          <p>O navegador decide: tem headset? Manda pro VR. Não tem? Manda pro 3D.</p>
-        </div>
-        <div class="how__step reveal">
-          <span class="how__num">03</span>
-          <p>A pessoa <em>sente</em> o produto — não só lê sobre ele.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA FINAL -->
-    <section class="cta" id="acesso">
-      <div class="cta__inner reveal">
-        <p class="eyebrow eyebrow--center">ACESSO ANTECIPADO</p>
-        <h2>Pronto pra tirar sua<br />landing page da caixinha?</h2>
-        <p class="cta__sub">Entra na lista e a gente avisa assim que abrir.</p>
-
-        <form class="cta__form" id="access-form" novalidate>
-          <label for="email" class="sr-only">Seu e-mail</label>
-          <input type="email" id="email" name="email" placeholder="seu@email.com" required autocomplete="email" />
-          <button type="submit" class="btn btn--primary">Quero acesso</button>
-        </form>
-        <p class="cta__note" id="access-note">Sem spam. Sem enrolação.</p>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer__inner">
-      <div class="footer__brand">
-        <a href="#top" class="nav__logo" aria-label="VOID — início">
-          <span class="nav__logo-ring" aria-hidden="true"></span>
-          VOID
-        </a>
-        <p>Feito no underground, publicado no mainstream.</p>
-      </div>
-      <div class="footer__cols">
-        <div>
-          <h4>Produto</h4>
-          <a href="#experiencia">Experiência</a>
-          <a href="#specs">Specs</a>
-          <a href="#como-funciona">Como funciona</a>
-        </div>
-        <div>
-          <h4>Projeto</h4>
-          <a href="docs/vault/Home.md">Documentação</a>
-          <a href="docs/vault/07-Decisoes/07-Decisoes.md">Decisões (ADRs)</a>
-          <a href="README.md">README</a>
-        </div>
-        <div>
-          <h4>Legal</h4>
-          <a href="#">Privacidade</a>
-          <a href="#">Termos</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer__bottom">
-      <span>© 2026 VOID.</span>
-      <span>Protótipo de landing page — stack final em <code>docs/vault</code>.</span>
-    </div>
-  </footer>
-
-  <script src="assets/js/main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VOID — Ótica Espacial Urbana | Prova Virtual 3D em Tempo Real</title>
+    <meta
+      name="description"
+      content="VOID é a experiência de prova virtual de óculos e visores em 3D de alta fidelidade que roda 100% no seu navegador com tracking facial neural. Sem instalar nada, sem latência."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2244%22 fill=%22%230071e3%22/><circle cx=%2250%22 cy=%2250%22 r=%2222%22 fill=%22%23ffffff%22/></svg>"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
